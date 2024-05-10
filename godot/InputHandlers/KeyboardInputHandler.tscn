@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b822y2mex70xw"]
+
+[ext_resource type="Script" path="res://InputHandlers/KeyboardInputHandler.gd" id="1_rkxsi"]
+
+[node name="KeyboardInputHandler" type="Node"]
+script = ExtResource("1_rkxsi")

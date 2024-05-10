@@ -1,0 +1,24 @@
+[gd_scene load_steps=6 format=3 uid="uid://daf8g7brlopse"]
+
+[ext_resource type="Script" path="res://Node2D.gd" id="1_4wime"]
+[ext_resource type="Script" path="res://KeyboardInputManger.gd" id="2_2k3bs"]
+[ext_resource type="Texture2D" uid="uid://ku62odb44ahw" path="res://icon.svg" id="2_laqvf"]
+[ext_resource type="PackedScene" uid="uid://b822y2mex70xw" path="res://KeyboardInputHandler.tscn" id="3_6du8u"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_42i8d"]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="CharacterBody2D" type="CharacterBody2D" parent="."]
+script = ExtResource("1_4wime")
+InputHandlerScript = ExtResource("2_2k3bs")
+
+[node name="KeyboardInputHandler" parent="CharacterBody2D" instance=ExtResource("3_6du8u")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
+shape = SubResource("CircleShape2D_42i8d")
+
+[node name="Sprite2D" type="Sprite2D" parent="CharacterBody2D"]
+position = Vector2(0, 1.19209e-07)
+scale = Vector2(0.109375, 0.125)
+texture = ExtResource("2_laqvf")
