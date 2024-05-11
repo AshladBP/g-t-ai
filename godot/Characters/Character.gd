@@ -2,15 +2,20 @@ extends CharacterBody2D
 
 @export var InputHandler : Resource
 @export var sprite : Texture2D
+@export var CollisionShapeColor : Color 
 
 var speed = 400
 var dirX = Vector2.ZERO
 var dirY = Vector2.ZERO
 
 func _ready():
-	var InputHandlerScene = InputHandler.instantiate()
-	add_child(InputHandlerScene)
-	$Sprite2D.texture = sprite
+	if InputHandler != null:
+		var InputHandlerScene = InputHandler.instantiate()
+		add_child(InputHandlerScene)
+	if sprite != null:
+		$Sprite2D.texture = sprite
+	if CollisionShapeColor != Color.BLACK:
+		$CollisionShape2D.debug_color = CollisionShapeColor
 
 func _physics_process(delta):
 	var dir

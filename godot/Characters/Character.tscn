@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://df8cp78sxr54f"]
 
 [ext_resource type="Script" path="res://Characters/Character.gd" id="1_ghdba"]
-[ext_resource type="Texture2D" uid="uid://dpji58dfnqg4e" path="res://Assets/PNG/Double (128px)/Characters/purple_character.png" id="2_hiuhf"]
+[ext_resource type="PackedScene" uid="uid://3up3hmevf3en" path="res://Components/Vision.tscn" id="2_7x2s6"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_7haag"]
 radius = 5.0
@@ -15,4 +15,5 @@ shape = SubResource("CircleShape2D_7haag")
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(0, 1.19209e-07)
 scale = Vector2(0.109375, 0.125)
-texture = ExtResource("2_hiuhf")
+
+[node name="Vision" parent="." instance=ExtResource("2_7x2s6")]

@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://3up3hmevf3en"]
+
+[ext_resource type="Script" path="res://Components/Vision.gd" id="1_hvt3t"]
+
+[node name="Vision" type="Node2D"]
+script = ExtResource("1_hvt3t")
+
+[node name="RayCast2D" type="RayCast2D" parent="."]
+rotation = -1.5708
+
+[node name="RayCast2D2" type="RayCast2D" parent="."]
+rotation = -1.5708
+target_position = Vector2(-15, 45)
+
+[node name="RayCast2D3" type="RayCast2D" parent="."]
+rotation = -1.5708
+target_position = Vector2(15, 45)
