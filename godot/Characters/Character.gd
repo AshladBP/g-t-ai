@@ -3,8 +3,8 @@ extends CharacterBody2D
 @export var InputHandler : Resource
 @export var sprite : Texture2D
 @export var CollisionShapeColor : Color 
+@export var speed = 400
 
-var speed = 400
 var dirX = Vector2.ZERO
 var dirY = Vector2.ZERO
 

@@ -10,3 +10,8 @@ func _process(delta):
 	for raycast in get_children():
 		if raycast.is_colliding():
 			print("Colliding with: ", raycast.get_collider())
+			print("    Angle : " + str(get_angle_to(raycast.get_collider().position)))
+			print("    Distance : " + str(get_distance_to(raycast.get_collider().position)))
+
+func get_distance_to(target):
+	return character.position.distance_to(target)

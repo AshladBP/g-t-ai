@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://daf8g7brlopse"]
+[gd_scene load_steps=3 format=3 uid="uid://5unaabuxpho8"]
 
 [ext_resource type="PackedScene" uid="uid://df8cp78sxr54f" path="res://Characters/Character.tscn" id="1_nry58"]
 [ext_resource type="PackedScene" uid="uid://b822y2mex70xw" path="res://InputHandlers/KeyboardInputHandler.tscn" id="2_4gncv"]
@@ -11,6 +11,7 @@ zoom = Vector2(3.25, 3.25)
 [node name="Character" parent="." instance=ExtResource("1_nry58")]
 InputHandler = ExtResource("2_4gncv")
 CollisionShapeColor = Color(0, 0, 0.945098, 0.47451)
+speed = 100
 
 [node name="Character2" parent="." instance=ExtResource("1_nry58")]
 position = Vector2(-38, 0)
