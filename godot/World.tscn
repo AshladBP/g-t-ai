@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://5unaabuxpho8"]
+[gd_scene load_steps=5 format=3 uid="uid://5unaabuxpho8"]
 
 [ext_resource type="PackedScene" uid="uid://df8cp78sxr54f" path="res://Characters/Character.tscn" id="1_nry58"]
 [ext_resource type="PackedScene" uid="uid://b822y2mex70xw" path="res://InputHandlers/KeyboardInputHandler.tscn" id="2_4gncv"]
+[ext_resource type="PackedScene" uid="uid://3up3hmevf3en" path="res://Components/Lidar/Lidar.tscn" id="3_vl7xa"]
+[ext_resource type="PackedScene" uid="uid://lw88n6mksbpb" path="res://Components/Ears/Ears.tscn" id="4_dmnvd"]
 
 [node name="World" type="Node2D"]
 
@@ -13,6 +15,10 @@ InputHandler = ExtResource("2_4gncv")
 CollisionShapeColor = Color(0, 0, 0.945098, 0.47451)
 speed = 100
 
+[node name="Lidar" parent="Character" instance=ExtResource("3_vl7xa")]
+
 [node name="Character2" parent="." instance=ExtResource("1_nry58")]
 position = Vector2(-38, 0)
 CollisionShapeColor = Color(0.909804, 0, 0, 0.631373)
+
+[node name="Ears" parent="Character2" instance=ExtResource("4_dmnvd")]
