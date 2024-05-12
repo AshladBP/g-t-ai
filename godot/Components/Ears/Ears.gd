@@ -1,6 +1,6 @@
 extends Node2D
 
-@export var radius: float = 50.0
+@export var radius = 50
 @onready var character = get_parent()
 
 func _ready():

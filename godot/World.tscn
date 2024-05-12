@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://df8cp78sxr54f" path="res://Characters/Character.tscn" id="1_nry58"]
 [ext_resource type="PackedScene" uid="uid://b822y2mex70xw" path="res://InputHandlers/KeyboardInputHandler.tscn" id="2_4gncv"]
 [ext_resource type="PackedScene" uid="uid://3up3hmevf3en" path="res://Components/Lidar/Lidar.tscn" id="3_vl7xa"]
-[ext_resource type="PackedScene" uid="uid://lw88n6mksbpb" path="res://Components/Ears/Ears.tscn" id="4_dmnvd"]
+[ext_resource type="PackedScene" uid="uid://b6baue5grd5pp" path="res://Components/Vision/Vision.tscn" id="5_aycbv"]
 
 [node name="World" type="Node2D"]
 
@@ -21,4 +21,4 @@ speed = 100
 position = Vector2(-38, 0)
 CollisionShapeColor = Color(0.909804, 0, 0, 0.631373)
 
-[node name="Ears" parent="Character2" instance=ExtResource("4_dmnvd")]
+[node name="Vision" parent="Character2" instance=ExtResource("5_aycbv")]
