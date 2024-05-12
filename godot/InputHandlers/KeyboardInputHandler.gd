@@ -2,7 +2,7 @@ extends Node
 
 @onready var character = get_parent()
 
-func _physics_process(delta):
+func _physics_process(_delta):
 	var x = 0
 	var y = 0
 	

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://3up3hmevf3en"]
+
+[ext_resource type="Script" path="res://Components/Lidar.gd" id="1_j5o86"]
+
+[node name="Lidar" type="Node2D"]
+script = ExtResource("1_j5o86")
