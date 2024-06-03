@@ -18,16 +18,19 @@ func _ready():
 		$CollisionShape2D.debug_color = CollisionShapeColor
 
 func _physics_process(delta):
-	var dir
-	if abs(dirX.x) == abs(dirY.y):
-		dir = Vector2(dirX.x/2, dirY.y/2)
-	else:
-		dir = dirX + dirY
-	velocity = dir * speed
-	position += velocity * delta
+	update_pos(delta)
 
 func move_X(val):
 	dirX = Vector2(val, 0)
 
 func move_Y(val):
 	dirY = Vector2(0, val)
+
+func update_pos(delta):
+	var dir
+	if abs(dirX.x) == abs(dirY.y):
+		dir = Vector2(dirX.x/2, dirY.y/2)
+	else:
+		dir = dirX + dirY
+	velocity = dir * speed
+	position += velocity

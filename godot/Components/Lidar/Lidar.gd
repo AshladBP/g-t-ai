@@ -5,7 +5,6 @@ extends Node2D
 @export var rayDist = 50
 var rays = []
 
-
 func _ready():
 	for i in range(rayAmnt):
 		var angle = i * 2 * PI / rayAmnt

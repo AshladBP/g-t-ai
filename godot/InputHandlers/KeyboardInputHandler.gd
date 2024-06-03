@@ -17,3 +17,4 @@ func _physics_process(_delta):
 
 	character.move_X(x)
 	character.move_Y(y)
+
