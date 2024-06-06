@@ -125,6 +125,9 @@ class Agent:
         self.critic = CriticNetwork(input_dims, alpha)
         self.memory = PPOMemory(batch_size)
 
+        self.actor_loss = 0
+        self.critic_loss = 0
+
 
     def remember(self, state, action, probs, vals, reward, done):
         self.memory.store_memory(state, action, probs, vals, reward, done)
@@ -154,6 +157,8 @@ class Agent:
         return action, probs, value
 
     def learn(self):
+        actor_losses = []
+        critic_losses = []
         for _ in range(self.nb_epochs):
             state_arr, action_arr, old_probs_arr, vals_arr, reward_arr, done_arr, batches = self.memory.generate_batches()
             values = vals_arr
@@ -202,6 +207,12 @@ class Agent:
                 self.actor.optimizer.step()
                 self.critic.optimizer.step()
 
+                # Track losses
+                actor_losses.append(actor_loss.item())
+                critic_losses.append(critic_loss.item())
+
+        self.actor_loss = np.mean(actor_losses)
+        self.critic_loss = np.mean(critic_losses)
         self.memory.clear_memory()
 
 
