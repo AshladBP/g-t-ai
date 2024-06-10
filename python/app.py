@@ -4,6 +4,7 @@ import pandas as pd
 import altair as alt
 import time
 from env import CartPoleEnv
+from pygame_env import PlayerEnv
 from ppo import Agent
 import torch as T
 
@@ -24,8 +25,8 @@ def plot_chart(dataframe, x_col, y_col, title, x_label, y_label, rolling_frame=5
     return alt.layer(line_spiky, line_smooth).properties(title=title).interactive()
 
 # Initialize environment and agent
-env = CartPoleEnv()
-agent = Agent(nb_actions=3, batch_size=64, alpha=0.0003, nb_epochs=4, input_dims=(4,))
+env = PlayerEnv()
+agent = Agent(nb_actions=4, batch_size=64, alpha=0.0003, nb_epochs=4, input_dims=(4,))
 
 # Streamlit app
 st.set_page_config(layout='wide')
@@ -118,7 +119,7 @@ while curr_step < max_time_steps:
         while not done:
             action, prob, val = agent.choose_action(observation)
             observation_, reward, done = env.step(action)
-            env.render(quick=False)
+            env.render()
             score += reward
             agent.remember(observation, action, prob, val, reward, done)
 
