@@ -88,7 +88,7 @@ score_history = []
 training = False
 paused = False
 
-N = 50
+N = 500
 max_time_steps = 500_000
 curr_step = 0
 curr_episode = 0
