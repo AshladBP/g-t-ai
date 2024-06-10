@@ -99,39 +99,36 @@ class PlayerEnv:
         return np.array([self.player.rect.x, self.player.rect.y])
 
     def _is_player_out_of_bounds(self):
-        if self.player.rect.left < 0 or self.player.rect.right > self.width or \
-           self.player.rect.top < 0 or self.player.rect.bottom > self.height:
+        if self.player.rect.left <= 0 or self.player.rect.right >= self.width or \
+           self.player.rect.top <= 0 or self.player.rect.bottom >= self.height:
+            print("Player out of bounds")
             return True
         return False
 
     class Player:
         def __init__(self, x, y):
             self.rect = pygame.Rect(x+3, y+3, 50, 50)
-            self.velocity = pygame.Vector2(0, 0)
             self.speed = 5
 
         def update(self, action):
-            self.velocity = pygame.Vector2(0, 0)
             if action == 0:  # right
-                self.velocity.x += 1
+                self.rect.x += self.speed
             if action == 1:  # left
-                self.velocity.x -= 1
+                self.rect.x -= self.speed
             if action == 2:  # up
-                self.velocity.y -= 1
+                self.rect.y -= self.speed
             if action == 3:  # down
-                self.velocity.y += 1
-
-            if self.velocity.length() > 0:
-                self.velocity = self.velocity.normalize() * self.speed
-
-            self.rect.x += self.velocity.x
-            self.rect.y += self.velocity.y
+                self.rect.y += self.speed
 
             # Collision detection with screen boundaries
-            if self.rect.left < 0 or self.rect.right > SCREEN_WIDTH:
-                self.rect.x -= self.velocity.x
-            if self.rect.top < 0 or self.rect.bottom > SCREEN_HEIGHT:
-                self.rect.y -= self.velocity.y
+            if self.rect.left < 0:
+                self.rect.left = 0
+            if self.rect.right > SCREEN_WIDTH:
+                self.rect.right = SCREEN_WIDTH
+            if self.rect.top < 0:
+                self.rect.top = 0
+            if self.rect.bottom > SCREEN_HEIGHT:
+                self.rect.bottom = SCREEN_HEIGHT
 
         def draw(self, surface, color):
             pygame.draw.rect(surface, color, self.rect)
