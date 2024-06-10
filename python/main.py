@@ -1,4 +1,4 @@
-from env import CartPoleEnv
+from pygame_env import PlayerEnv
 import numpy as np
 from ppo import Agent
 import matplotlib.pyplot as plt
@@ -20,11 +20,11 @@ def plot_learning_curve(learning_steps, scores, avg_last_10_scores, labels, figu
     plt.close()
 
 if __name__ == '__main__':
-    env = CartPoleEnv()
+    env = PlayerEnv()
     N = 50
     batch_sizes = [32, 64, 128, 256, 1024]  # Different batch sizes
     nb_epochs = 4
-    alpha = 0.0003
+    alpha = 0.003
     max_time_steps = 500_000
     figure_file = 'plots/cartpole_multiple_batch_sizes.png'
 
@@ -52,6 +52,7 @@ if __name__ == '__main__':
             while not done:
                 action, prob, val = agent.choose_action(observation)
                 observation_, reward, done = env.step(action)
+                env.render()
                 score += reward
                 agent.remember(observation, action, prob, val, reward, done)
                 if curr_step % N == 0:

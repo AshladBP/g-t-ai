@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+import random
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -28,6 +29,7 @@ class PlayerEnv:
         ]
         self.goal = self.Goal(700, 500, 25)
         self.raycast_intersections = []
+        self.prev_distance = 0
 
     def close(self):
         """
@@ -39,6 +41,8 @@ class PlayerEnv:
     def reset(self):
         self.player = self.Player(self.width // 2+3, self.height // 2+3)
         self.raycast_intersections = []
+        self.prev_distance = 0
+        self.goal = self.Goal(random.randint(0, self.width), random.randint(0, self.height), 25)
         return self._get_obs()
 
     def step(self, action):
@@ -56,8 +60,11 @@ class PlayerEnv:
             reward = 1.0
         else:
             distance = self._get_distance_to_goal()
-            normalized_distance = distance / np.sqrt(SCREEN_WIDTH**2 + SCREEN_HEIGHT**2)
-            reward = 1.0 - normalized_distance
+            if distance < self.prev_distance:
+                reward = 1.0
+            else:
+                reward = -1.0
+            self.prev_distance = distance
         
         return self._get_obs(), reward, win
 
@@ -93,10 +100,9 @@ class PlayerEnv:
             pygame.draw.line(self.screen, self.colors['purple'], start_pos, end_pos, 2)
 
         pygame.display.flip()
-        self.clock.tick(60)
 
     def _get_obs(self):
-        return np.array([self.player.rect.x, self.player.rect.y])
+        return np.array([self.player.rect.x, self.player.rect.y, self.goal.circle.center[0], self.goal.circle.center[1]])
 
     def _is_player_out_of_bounds(self):
         if self.player.rect.left <= 0 or self.player.rect.right >= self.width or \
@@ -108,7 +114,7 @@ class PlayerEnv:
     class Player:
         def __init__(self, x, y):
             self.rect = pygame.Rect(x+3, y+3, 50, 50)
-            self.speed = 5
+            self.speed = 1
 
         def update(self, action):
             if action == 0:  # right
