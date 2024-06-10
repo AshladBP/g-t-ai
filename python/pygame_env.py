@@ -25,10 +25,11 @@ class PlayerEnv:
 
         # Initialize player, walls, and goal
         self.player = self.Player(self.width // 2, self.height // 2)
-        self.walls = [
+        self.walls = []
+        """[
             self.Wall(300, 300, 100, 100),
             self.Wall(500, 150, 150, 200)
-        ]
+        ]"""
         self.goal = self.Goal(700, 500, 25)
         self.raycast_intersections = []
         self.prev_distance = 0
@@ -48,6 +49,7 @@ class PlayerEnv:
         return self._get_obs()
 
     def step(self, action):
+        pygame.event.pump()
         self.player.update(action)
         for wall in self.walls:
             if self.player.rect.colliderect(wall.rect):
@@ -120,7 +122,7 @@ class PlayerEnv:
     class Player:
         def __init__(self, x, y):
             self.rect = pygame.Rect(x+3, y+3, 50, 50)
-            self.speed = 4
+            self.speed = 1
 
         def update(self, action):
             if action == 0:  # right

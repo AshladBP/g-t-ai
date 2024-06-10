@@ -22,7 +22,7 @@ def plot_learning_curve(learning_steps, scores, avg_last_10_scores, labels, figu
 
 if __name__ == '__main__':
     env = PlayerEnv()
-    N = 500
+    N = 5000
     batch_sizes = [32, 64, 128, 256, 1024]  # Different batch sizes
     nb_epochs = 4
     alpha = 0.0003
