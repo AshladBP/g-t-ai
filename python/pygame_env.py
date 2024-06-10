@@ -26,6 +26,8 @@ class PlayerEnv:
         # Initialize player, walls, and goal
         self.player = self.Player(self.width // 2, self.height // 2)
         self.walls = [
+            self.Wall(300, 300, 100, 100),
+            self.Wall(500, 150, 150, 200)
         ]
         self.goal = self.Goal(700, 500, 25)
         self.raycast_intersections = []
@@ -49,21 +51,21 @@ class PlayerEnv:
         self.player.update(action)
         for wall in self.walls:
             if self.player.rect.colliderect(wall.rect):
-                return self._get_obs(), -1.0, True
+                return self._get_obs(), -10.0, True
 
         if self._is_player_out_of_bounds():
-            return self._get_obs(), -1.0, True
+            return self._get_obs(), -10.0, True
         
-        self.goal.check_collision(self.player.rect)
         win = self.goal.circle.colliderect(self.player.rect)
+        distance = self._get_distance_to_goal()
+        normalized_distance = distance / (SCREEN_WIDTH + SCREEN_HEIGHT) 
         if win:
-            reward = 1.0
+            reward = 10.0
         else:
-            distance = self._get_distance_to_goal()
             if distance < self.prev_distance:
-                reward = 1.0
+                reward = normalized_distance
             else:
-                reward = -1.0
+                reward = -normalized_distance
             self.prev_distance = distance
         
         return self._get_obs(), reward, win
@@ -102,7 +104,11 @@ class PlayerEnv:
         pygame.display.flip()
 
     def _get_obs(self):
-        return np.array([self.player.rect.x, self.player.rect.y, self.goal.circle.center[0], self.goal.circle.center[1]])
+        player_x = self.player.rect.x / SCREEN_WIDTH
+        player_y = self.player.rect.y / SCREEN_HEIGHT
+        goal_x = self.goal.circle.center[0] / SCREEN_WIDTH
+        goal_y = self.goal.circle.center[1] / SCREEN_HEIGHT
+        return np.array([player_x, player_y, goal_x, goal_y])
 
     def _is_player_out_of_bounds(self):
         if self.player.rect.left <= 0 or self.player.rect.right >= self.width or \
@@ -114,7 +120,7 @@ class PlayerEnv:
     class Player:
         def __init__(self, x, y):
             self.rect = pygame.Rect(x+3, y+3, 50, 50)
-            self.speed = 1
+            self.speed = 4
 
         def update(self, action):
             if action == 0:  # right

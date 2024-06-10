@@ -33,7 +33,7 @@ class Player:
     def __init__(self, x, y):
         self.rect = pygame.Rect(x, y, 50, 50)
         self.velocity = pygame.Vector2(0, 0)
-        self.speed = 5
+        self.speed = 20
 
     def update(self):
         keys = pygame.key.get_pressed()

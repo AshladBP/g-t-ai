@@ -1,3 +1,4 @@
+from time import sleep
 from pygame_env import PlayerEnv
 import numpy as np
 from ppo import Agent
@@ -21,10 +22,10 @@ def plot_learning_curve(learning_steps, scores, avg_last_10_scores, labels, figu
 
 if __name__ == '__main__':
     env = PlayerEnv()
-    N = 50
+    N = 500
     batch_sizes = [32, 64, 128, 256, 1024]  # Different batch sizes
     nb_epochs = 4
-    alpha = 0.003
+    alpha = 0.0003
     max_time_steps = 500_000
     figure_file = 'plots/cartpole_multiple_batch_sizes.png'
 
@@ -56,7 +57,7 @@ if __name__ == '__main__':
                 score += reward
                 agent.remember(observation, action, prob, val, reward, done)
                 if curr_step % N == 0:
-                    agent.learn()
+                    print(agent.learn())
                     learn_iters += 1
                     learning_steps.append(curr_step)
                     if score_history:
