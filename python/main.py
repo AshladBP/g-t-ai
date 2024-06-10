@@ -34,7 +34,7 @@ if __name__ == '__main__':
     labels = []
 
     for batch_size in batch_sizes:
-        agent = Agent(nb_actions=3, batch_size=batch_size, alpha=alpha, nb_epochs=nb_epochs, input_dims=(4,))
+        agent = Agent(nb_actions=4, batch_size=batch_size, alpha=alpha, nb_epochs=nb_epochs, input_dims=(4,))
         score_history = []
         avg_last_10_scores = []
         learning_steps = []
@@ -46,10 +46,6 @@ if __name__ == '__main__':
         while curr_step < max_time_steps:
             curr_episode += 1
             env.reset()
-            if curr_step % 10 == 0:
-                env.render(quick = False)
-            else:
-                env.render()
             observation, _, _ = env.step(0)
             done = False
             score = 0

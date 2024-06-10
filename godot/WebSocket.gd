@@ -1,55 +1,37 @@
 extends Node
 
-var socket = WebSocketPeer.new()
+# The URL we will connect to.
+var websocket_url = "ws://localhost:7272"
+var socket := WebSocketPeer.new()
+
+
+func log_message(message):
+	var time = "[color=#aaaaaa] %s [/color]" % Time.get_time_string_from_system()
+	print(time + message + "\n")
+
 
 func _ready():
-    connect_to_server("wss://localhost:8080")
+	if socket.connect_to_url(websocket_url) != OK:
+		log_message("Unable to connect.")
+		set_process(false)
+
 
 func _process(_delta):
-    socket.poll()
-    handle_socket_state()
+	socket.poll()
 
-func connect_to_server(url: String):
-    var error = socket.connect_to_url(url)
-    if error != OK:
-        print("Failed to connect to WebSocket server: ", error)
-    else:
-        print("Connecting to WebSocket server...")
+	if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		receive_messages()
 
-func handle_socket_state():
-    var state = socket.get_ready_state()
-    match state:
-        WebSocketPeer.STATE_OPEN:
-            process_packets()
-        WebSocketPeer.STATE_CLOSING:
-            # Continue polling until fully closed
-            pass
-        WebSocketPeer.STATE_CLOSED:
-            notify_closure()
-            set_process(false)
 
-func process_packets():
-    while socket.get_available_packet_count() > 0:
-        var packet = socket.get_packet()
-        print("Received packet: ", packet)
 
-func notify_closure():
-    var code = socket.get_close_code()
-    var reason = socket.get_close_reason()
-    print("WebSocket closed with code: %d, reason: %s. Clean: %s" % [code, reason, code != -1])
+func receive_messages():
+	if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		while socket.get_available_packet_count():
+			log_message(socket.get_packet().get_string_from_ascii())
 
-func send_json(data: Dictionary):
-    var json_string = JSON.parse_string(JSON.stringify(data))
-    var error = socket.send_text(json_string)
-    if error != OK:
-        print("Failed to send JSON data: ", error)
-    else:
-        print("JSON data sent successfully: ", json_string)
 
-# Example usage
-func _on_Button_pressed():
-    var data = {
-        "type": "greeting",
-        "message": "Hello, WebSocket server!"
-    }
-    send_json(data)
+func send_message(message: String):
+	if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		socket.send_text(message)
+	else:
+		log_message("WebSocket connection is not open.")
