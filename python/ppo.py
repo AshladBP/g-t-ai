@@ -213,6 +213,7 @@ class Agent:
         self.actor_loss = np.mean(actor_losses)
         self.critic_loss = np.mean(critic_losses)
         self.memory.clear_memory()
+        return "just learned"
 
 
 

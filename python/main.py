@@ -1,4 +1,5 @@
-from env import CartPoleEnv
+from time import sleep
+from pygame_env import PlayerEnv
 import numpy as np
 from ppo import Agent
 import matplotlib.pyplot as plt
@@ -20,8 +21,8 @@ def plot_learning_curve(learning_steps, scores, avg_last_10_scores, labels, figu
     plt.close()
 
 if __name__ == '__main__':
-    env = CartPoleEnv()
-    N = 50
+    env = PlayerEnv()
+    N = 500
     batch_sizes = [32, 64, 128, 256, 1024]  # Different batch sizes
     nb_epochs = 4
     alpha = 0.0003
@@ -34,7 +35,7 @@ if __name__ == '__main__':
     labels = []
 
     for batch_size in batch_sizes:
-        agent = Agent(nb_actions=3, batch_size=batch_size, alpha=alpha, nb_epochs=nb_epochs, input_dims=(4,))
+        agent = Agent(nb_actions=4, batch_size=batch_size, alpha=alpha, nb_epochs=nb_epochs, input_dims=(4,))
         score_history = []
         avg_last_10_scores = []
         learning_steps = []
@@ -46,20 +47,17 @@ if __name__ == '__main__':
         while curr_step < max_time_steps:
             curr_episode += 1
             env.reset()
-            if curr_step % 10 == 0:
-                env.render(quick = False)
-            else:
-                env.render()
             observation, _, _ = env.step(0)
             done = False
             score = 0
             while not done:
                 action, prob, val = agent.choose_action(observation)
                 observation_, reward, done = env.step(action)
+                env.render()
                 score += reward
                 agent.remember(observation, action, prob, val, reward, done)
                 if curr_step % N == 0:
-                    agent.learn()
+                    print(agent.learn())
                     learn_iters += 1
                     learning_steps.append(curr_step)
                     if score_history:

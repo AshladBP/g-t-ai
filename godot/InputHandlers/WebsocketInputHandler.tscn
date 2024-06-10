@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://3t7yw0d5h1q0"]
+
+[ext_resource type="Script" path="res://InputHandlers/WebsocketInputHandler.gd" id="1_u60r3"]
+
+[node name="WebsocketInputHandler" type="Node"]
+script = ExtResource("1_u60r3")
