@@ -63,9 +63,12 @@ class CartPoleEnv:
         self.state = sol.y[:, -1]
 
         x, x_dot, theta, theta_dot = self.state
-        done = x < -2.4 or x > 2.4 or theta < -np.pi / 15 or theta > np.pi / 15 or self.steps >= 200
+        done = x < -2.4 or x > 2.4 or theta < -np.pi / 15 or theta > np.pi / 15 or self.steps >= 1000
 
         reward = 1.0 if not done else 0.0
+
+        if self.steps >= 900:
+            reward += self.steps/1000
 
         return np.array(self.state), reward, done
 
@@ -81,7 +84,7 @@ class CartPoleEnv:
 
         return [x_dot, x_ddot, theta_dot, theta_ddot]
 
-    def render(self):
+    def render(self, quick):
         """
         Render the current frame.
         """
@@ -90,7 +93,8 @@ class CartPoleEnv:
         pole_end = (self.width/2 + self.state[0]*self.scale + self.l*self.scale*np.sin(self.state[2]), self.height/2 - self.l*self.scale*np.cos(self.state[2]))
         pygame.draw.line(self.screen, self.colors['red'], (self.width/2 + self.state[0]*self.scale, self.height/2), pole_end, 5)
 
-        time.sleep(1 / self.framerate)
+        if not quick:
+            time.sleep(1 / self.framerate)
         pygame.display.flip()
 
     def close(self):
