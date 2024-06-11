@@ -5,7 +5,7 @@ from ppo import Agent
 import matplotlib.pyplot as plt
 
 LOAD = True
-SAVE = True
+SAVE = False
 RENDER = True
 
 def plot_learning_curve(learning_steps, scores, avg_last_10_scores, label, figure_file):
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         avg_last_10_scores = []
         label = f'Batch size {batch_size}'
 
-        agent = Agent(nb_actions=4, batch_size=batch_size, alpha=alpha, nb_epochs=nb_epochs, input_dims=(10,))
+        agent = Agent(nb_actions=4, batch_size=batch_size, alpha=alpha, nb_epochs=nb_epochs, input_dims=(12,))
         if LOAD:
             agent.load_models()
         learn_iters = 0

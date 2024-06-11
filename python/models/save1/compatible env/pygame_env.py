@@ -16,7 +16,7 @@ class PlayerEnv:
         self.clock = pygame.time.Clock()
         
         self.current_step = 0
-        self.max_steps = 1100
+        self.max_steps = 1000
         self.raycast_dist = 75
         
         # Colors
@@ -73,7 +73,7 @@ class PlayerEnv:
                 self.walls.append(self.Wall(self.width - 10, y, 10, 50))
 
         if WITH_WALLS:
-            for _ in range(random.randint(2, 5)):
+            for _ in range(random.randint(10, 50)):
                 x = random.randint(0, self.width)
                 y = random.randint(0, self.height)
                 width = random.randint(1, 10)
@@ -93,17 +93,16 @@ class PlayerEnv:
 
         for wall in self.walls:
             if self.player.rect.colliderect(wall.rect):
-                print("You hit a wall!")
-                return self._get_obs(), -150.0, True  
+                return self._get_obs(), -10.0, True  
         
         if self.current_step >= self.max_steps:
-            return self._get_obs(), -100.0, True
+            return self._get_obs(), -300.0, True
 
         win = self.goal.circle.colliderect(self.player.rect)
         if win:
             if max(self.ray_distances) > 0.0: 
-                return self._get_obs(), 75.0, True  
-            return self._get_obs(), 50.0, True 
+                return self._get_obs(), 5000.0, True  
+            return self._get_obs(), 300.0, True 
 
         distance = self._get_distance_to_goal()
         normalized_distance = distance / (SCREEN_WIDTH + SCREEN_HEIGHT)
@@ -112,16 +111,17 @@ class PlayerEnv:
 
         if distance < self.prev_distance:
             reward += 1.0
-            #if max(self.ray_distances) > 0.0:
-            #    reward += 2.0
+            if max(self.ray_distances) > 0.0:
+                reward += 100.0
 
         if distance >= self.prev_distance:
-            reward -= 0.5
+            reward -= 1.0
 
-        """if distance < 200 and distance > self.prev_distance:
+        # If the player is very close to the target but he is moving away from it and he has one or many raycasts hitting a wall, penalize him a lot 
+        if distance < 200 and distance > self.prev_distance:
             reward -= 50.0
             if max(self.ray_distances) > 0.0:
-                reward -= 100.0"""
+                reward -= 100.0
 
 
         reward -= 0.1
@@ -171,21 +171,11 @@ class PlayerEnv:
         pygame.display.flip()
 
     def _get_obs(self):
-        player_x = self.player.rect.x 
-        player_y = self.player.rect.y 
-        goal_x = self.goal.circle.center[0] 
-        goal_y = self.goal.circle.center[1] 
-        
-        player_to_goal_x = goal_x - player_x
-        player_to_goal_y = goal_y - player_y
-        
-        distance = np.sqrt(player_to_goal_x**2 + player_to_goal_y**2)
-        normalized_distance = distance / np.sqrt(SCREEN_WIDTH**2 + SCREEN_HEIGHT**2)
-        
-        angle = np.arctan2(player_to_goal_y, player_to_goal_x)
-        normalized_angle = (angle + np.pi) / (2 * np.pi)
-        
-        return np.concatenate(([normalized_angle, normalized_distance], self.ray_distances))
+        player_x = self.player.rect.x / SCREEN_WIDTH
+        player_y = self.player.rect.y / SCREEN_HEIGHT
+        goal_x = self.goal.circle.center[0] / SCREEN_WIDTH
+        goal_y = self.goal.circle.center[1] / SCREEN_HEIGHT
+        return np.concatenate(([player_x, player_y, goal_x, goal_y], self.ray_distances))
 
     def _is_player_out_of_bounds(self):
         if self.player.rect.left <= 0 or self.player.rect.right >= self.width or \
