@@ -18,6 +18,10 @@ class PlayerEnv:
         self.current_step = 0
         self.max_steps = 1100
         self.raycast_dist = 75
+
+        self.prev_distances = []  # To track previous distances
+        self.stagnation_threshold = 10  # Number of steps to check for stagnation
+        self.stagnation_tolerance = 0.1  # Tolerance level for stagnation
         
         # Colors
         self.colors = {
@@ -73,7 +77,7 @@ class PlayerEnv:
                 self.walls.append(self.Wall(self.width - 10, y, 10, 50))
 
         if WITH_WALLS:
-            for _ in range(random.randint(2, 5)):
+            for _ in range(random.randint(3, 15)):
                 x = random.randint(0, self.width)
                 y = random.randint(0, self.height)
                 width = random.randint(1, 10)
@@ -110,26 +114,34 @@ class PlayerEnv:
 
         reward = 0
 
-        if distance < self.prev_distance:
-            reward += 1.0
-            #if max(self.ray_distances) > 0.0:
-            #    reward += 2.0
+        # Track progress over time
+        if len(self.prev_distances) >= self.stagnation_threshold:
+            self.prev_distances.pop(0)
+        self.prev_distances.append(distance)
 
-        if distance >= self.prev_distance:
-            reward -= 0.5
-
-        """if distance < 200 and distance > self.prev_distance:
-            reward -= 50.0
-            if max(self.ray_distances) > 0.0:
-                reward -= 100.0"""
-
+        # Check for stagnation and adjust reward
+        if self.is_stuck():
+            if distance > self.prev_distance:
+                reward += 1.0  # Small reward for moving away
+            else:
+                reward -= 0.5  # Penalize for not moving away
+        else:
+            if distance < self.prev_distance:
+                reward += 1.0
+            else:
+                reward -= 0.5
 
         reward -= 0.1
         self.prev_distance = distance
 
-
         return self._get_obs(), reward, False
 
+    def is_stuck(self):
+        if len(self.prev_distances) < self.stagnation_threshold:
+            return False
+        min_distance = min(self.prev_distances)
+        max_distance = max(self.prev_distances)
+        return abs(max_distance - min_distance) < self.stagnation_tolerance
 
     def _get_distance_to_goal(self):
         player_center = self.player.rect.center
