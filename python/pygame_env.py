@@ -4,7 +4,7 @@ import random
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-WITH_WALLS = True
+WITH_WALLS = False
 WITH_BORDERS = True
 
 class PlayerEnv:
@@ -19,9 +19,9 @@ class PlayerEnv:
         self.max_steps = 1100
         self.raycast_dist = 75
 
-        self.prev_distances = []  # To track previous distances
-        self.stagnation_threshold = 10  # Number of steps to check for stagnation
-        self.stagnation_tolerance = 0.1  # Tolerance level for stagnation
+        self.prev_distances = []  
+        self.stagnation_threshold = 10 
+        self.stagnation_tolerance = 0.1 
         
         # Colors
         self.colors = {
@@ -61,7 +61,6 @@ class PlayerEnv:
         self.prev_distance = 0
         self.goal = self.Goal(random.randint(0, self.width), random.randint(0, self.height), 7)
         
-        # Check if goal spawns inside a wall
         while self._is_goal_inside_wall():
             self.goal = self.Goal(random.randint(0, self.width), random.randint(0, self.height), 7)
         
@@ -77,7 +76,7 @@ class PlayerEnv:
                 self.walls.append(self.Wall(self.width - 10, y, 10, 50))
 
         if WITH_WALLS:
-            for _ in range(random.randint(3, 15)):
+            for _ in range(random.randint(3, 7)):
                 x = random.randint(0, self.width)
                 y = random.randint(0, self.height)
                 width = random.randint(1, 10)
@@ -114,22 +113,20 @@ class PlayerEnv:
 
         reward = 0
 
-        # Track progress over time
         if len(self.prev_distances) >= self.stagnation_threshold:
             self.prev_distances.pop(0)
         self.prev_distances.append(distance)
 
-        # Check for stagnation and adjust reward
         if self.is_stuck():
             if distance > self.prev_distance:
-                reward += 1.0  # Small reward for moving away
+                reward += 10.0  
             else:
-                reward -= 0.5  # Penalize for not moving away
+                reward -= 0.5  
         else:
             if distance < self.prev_distance:
-                reward += 1.0
+                reward += 0.1
             else:
-                reward -= 0.5
+                reward -= 0.05
 
         reward -= 0.1
         self.prev_distance = distance

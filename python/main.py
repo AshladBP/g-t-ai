@@ -5,7 +5,7 @@ from ppo import Agent
 import matplotlib.pyplot as plt
 
 LOAD = True
-SAVE = True
+SAVE = False
 RENDER = True
 
 def plot_learning_curve(learning_steps, scores, avg_last_10_scores, label, figure_file):
@@ -63,7 +63,7 @@ if __name__ == '__main__':
                     learn_iters += 1
                     learning_steps.append(curr_step)
                     if score_history:
-                        score_history.append(score_history[-1])  # Append the most recent episode score
+                        score_history.append(score_history[-1])
                         if len(score_history) >= 10:
                             avg_last_10_scores.append(np.mean(score_history[-10:]))
                         else:
