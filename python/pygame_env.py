@@ -4,7 +4,9 @@ import random
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-WITH_WALLS = False
+MIN_WALLS = 1
+MAX_WALLS = 3
+WITH_WALLS = True
 WITH_BORDERS = True
 
 class PlayerEnv:
@@ -12,16 +14,16 @@ class PlayerEnv:
         pygame.init()
         self.width, self.height = SCREEN_WIDTH, SCREEN_HEIGHT
         self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("Dynamic Raycasting")
+        pygame.display.set_caption("AI Training Environment")
         self.clock = pygame.time.Clock()
         
         self.current_step = 0
-        self.max_steps = 1100
+        self.max_steps = 2500
         self.raycast_dist = 75
 
         self.prev_distances = []  
         self.stagnation_threshold = 10 
-        self.stagnation_tolerance = 0.1 
+        self.stagnation_tolerance = 10
         
         # Colors
         self.colors = {
@@ -59,11 +61,7 @@ class PlayerEnv:
                 self.player = self.Player(self.width // 2+3, self.height // 2+3)
         self.raycast_intersections = []
         self.prev_distance = 0
-        self.goal = self.Goal(random.randint(0, self.width), random.randint(0, self.height), 7)
-        
-        while self._is_goal_inside_wall():
-            self.goal = self.Goal(random.randint(0, self.width), random.randint(0, self.height), 7)
-        
+
         self.walls = []
 
         if WITH_BORDERS:
@@ -76,7 +74,7 @@ class PlayerEnv:
                 self.walls.append(self.Wall(self.width - 10, y, 10, 50))
 
         if WITH_WALLS:
-            for _ in range(random.randint(3, 7)):
+            for _ in range(random.randint(MIN_WALLS, MAX_WALLS)):
                 x = random.randint(0, self.width)
                 y = random.randint(0, self.height)
                 width = random.randint(1, 10)
@@ -86,6 +84,14 @@ class PlayerEnv:
                 else:
                     self.walls.append(self.Wall(x, y, height, width))
 
+        center_x = self.width // 2
+        center_y = self.height // 2
+        offset = 200
+
+        self.goal = self.Goal(random.randint(center_x - offset, center_x + offset), random.randint(center_y - offset, center_y + offset), 7)
+        while self._is_goal_inside_wall():
+            self.goal = self.Goal(random.randint(center_x - offset, center_x + offset), random.randint(center_y - offset, center_y + offset), 7)
+        
         return self._get_obs()
 
     def step(self, action):
@@ -97,15 +103,15 @@ class PlayerEnv:
         for wall in self.walls:
             if self.player.rect.colliderect(wall.rect):
                 print("You hit a wall!")
-                return self._get_obs(), -150.0, True  
+                return self._get_obs(), -50.0, True  
         
         if self.current_step >= self.max_steps:
-            return self._get_obs(), -100.0, True
+            return self._get_obs(), -75.0, True
 
         win = self.goal.circle.colliderect(self.player.rect)
         if win:
-            if max(self.ray_distances) > 0.0: 
-                return self._get_obs(), 75.0, True  
+            #if max(self.ray_distances) > 0.0: 
+            #    return self._get_obs(), 75.0, True  
             return self._get_obs(), 50.0, True 
 
         distance = self._get_distance_to_goal()
@@ -117,7 +123,11 @@ class PlayerEnv:
             self.prev_distances.pop(0)
         self.prev_distances.append(distance)
 
-        if self.is_stuck():
+
+        #if self.is_stuck():
+        #    reward -= 0.5
+            
+        """if self.is_stuck():
             if distance > self.prev_distance:
                 reward += 10.0  
             else:
@@ -126,7 +136,7 @@ class PlayerEnv:
             if distance < self.prev_distance:
                 reward += 0.1
             else:
-                reward -= 0.05
+                reward -= 0.05"""
 
         reward -= 0.1
         self.prev_distance = distance

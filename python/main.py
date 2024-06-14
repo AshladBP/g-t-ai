@@ -5,7 +5,7 @@ from ppo import Agent
 import matplotlib.pyplot as plt
 
 LOAD = True
-SAVE = False
+SAVE = True
 RENDER = True
 
 def plot_learning_curve(learning_steps, scores, avg_last_10_scores, label, figure_file):
