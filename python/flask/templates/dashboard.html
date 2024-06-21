@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="sidebar" id="sidebar">
+        <h2>Level Selector</h2>
+        <ul id="level-list"></ul>
+    </div>
+    <div class="main-content">
+        <h1>PPO Training Dashboard</h1>
+        <div class="charts">
+            <div id="actor-loss-chart"></div>
+            <div id="critic-loss-chart"></div>
+            <div id="reward-chart"></div>
+        </div>
+        <div class="controls">
+            <button id="toggle-training">Start Training</button>
+            <button id="toggle-rendering">Start Rendering</button>
+            <button id="save-model">Save Model</button>
+            <button id="load-model">Load Model</button>
+            <button id="toggle-sidebar">Toggle Level Selector</button>
+        </div>
+        <div class="drop-zones">
+            <div id="actor-drop-zone" class="drop-zone">
+                <p>Drag and drop actor model file here</p>
+            </div>
+            <div id="critic-drop-zone" class="drop-zone">
+                <p>Drag and drop critic model file here</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+
+<script>
+let trainingInterval;
+let isTraining = false;
+
+function createEmptyCharts() {
+    const emptyData = [{ step: 0, value: 0 }];
+    const emptySpec = {
+        $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        data: { values: emptyData },
+        mark: 'line',
+        encoding: {
+            x: { field: 'step', type: 'quantitative' },
+            y: { field: 'value', type: 'quantitative' }
+        },
+        width: 400,
+        height: 300
+    };
+
+    vegaEmbed('#actor-loss-chart', {...emptySpec, title: 'Actor Loss'}, {actions: false});
+    vegaEmbed('#critic-loss-chart', {...emptySpec, title: 'Critic Loss'}, {actions: false});
+    vegaEmbed('#reward-chart', {...emptySpec, title: 'Rewards'}, {actions: false});
+}
+
+function updateCharts() {
+    fetch('/get_data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.actor_chart && Object.keys(data.actor_chart).length > 0) {
+                vegaEmbed('#actor-loss-chart', data.actor_chart, {actions: false});
+                vegaEmbed('#critic-loss-chart', data.critic_chart, {actions: false});
+                vegaEmbed('#reward-chart', data.reward_chart, {actions: false});
+            }
+        });
+}
+
+createEmptyCharts();
+
+document.getElementById('toggle-training').addEventListener('click', () => {
+    if (isTraining) {
+        fetch('/stop_training', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.status);
+                isTraining = false;
+                document.getElementById('toggle-training').textContent = 'Start Training';
+                if (trainingInterval) {
+                    clearInterval(trainingInterval);
+                    trainingInterval = null;
+                }
+            });
+    } else {
+        fetch('/start_training', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.status);
+                isTraining = true;
+                document.getElementById('toggle-training').textContent = 'Stop Training';
+                if (!trainingInterval) {
+                    trainingInterval = setInterval(updateCharts, 2000);
+                }
+            });
+    }
+});
+
+document.getElementById('toggle-rendering').addEventListener('click', () => {
+    fetch('/toggle_rendering', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data.status);
+            document.getElementById('toggle-rendering').textContent =
+                data.is_rendering ? 'Stop Rendering' : 'Start Rendering';
+        });
+});
+
+function loadLevels() {
+    fetch('/get_levels')
+        .then(response => response.json())
+        .then(levels => {
+            const levelList = document.getElementById('level-list');
+            levelList.innerHTML = '';
+            levels.forEach(level => {
+                const li = document.createElement('li');
+                li.textContent = level;
+                li.onclick = () => selectLevel(level);
+                levelList.appendChild(li);
+            });
+        });
+}
+
+function selectLevel(level) {
+    fetch('/select_level', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ level: level }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data.status);
+    });
+}
+
+document.getElementById('toggle-sidebar').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('active');
+});
+
+const actorDropZone = document.getElementById('actor-drop-zone');
+const criticDropZone = document.getElementById('critic-drop-zone');
+
+function setupDropZone(dropZone, modelType) {
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        uploadModel(file, modelType);
+    });
+}
+
+setupDropZone(actorDropZone, 'actor');
+setupDropZone(criticDropZone, 'critic');
+
+function uploadModel(file, modelType) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('model_type', modelType);
+
+    fetch('/load_model', {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data.status);
+    });
+}
+
+document.getElementById('save-model').addEventListener('click', () => {
+    fetch('/save_model', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data.status);
+        });
+});
+
+document.getElementById('load-model').addEventListener('click', () => {
+    fetch('/get_model')
+        .then(response => response.json())
+        .then(data => {
+            const actorUrl = window.URL.createObjectURL(new Blob([data.actor_model], {type: 'application/octet-stream'}));
+            const criticUrl = window.URL.createObjectURL(new Blob([data.critic_model], {type: 'application/octet-stream'}));
+            
+            downloadModel(actorUrl, 'actor_model.pth');
+            downloadModel(criticUrl, 'critic_model.pth');
+        });
+});
+
+function downloadModel(url, filename) {
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+loadLevels();
+</script>
+
+{% endblock %}
