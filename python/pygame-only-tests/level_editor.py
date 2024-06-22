@@ -10,6 +10,8 @@ class LevelEditor:
         self.walls = []
         self.spawn = None
         self.goals = []
+        self.reward_zones = []
+        self.current_reward_zone = None
         self.current_tool = 'spawn'
         self.colors = {
             'background': (0, 0, 0),
@@ -21,7 +23,8 @@ class LevelEditor:
             'button': (100, 100, 100),
             'hover': (150, 150, 150),
             'eraser': (255, 255, 0),
-            'toolbar': (50, 50, 50)
+            'toolbar': (50, 50, 50),
+            'reward_zone': (0, 255, 0, 128),
         }
         self.font = pygame.font.Font(None, 24)
         self.wall_start = None
@@ -29,6 +32,7 @@ class LevelEditor:
         os.makedirs(self.levels_folder, exist_ok=True)
         self.eraser_size = 10
         self.back_button = pygame.Rect(10, self.height - 60, 180, 40)
+
 
     def run(self, screen, clock):
         running = True
@@ -81,6 +85,16 @@ class LevelEditor:
         for goal in self.goals:
             pygame.draw.circle(screen, self.colors['goal'], goal, 5)
 
+        for zone in self.reward_zones:
+            pygame.draw.circle(screen, self.colors['reward_zone'], zone['center'], zone['radius'], 2)
+
+        # Draw reward zone preview
+        if self.current_reward_zone:
+            center = self.current_reward_zone['center']
+            end_pos = pygame.mouse.get_pos()
+            radius = int(((center[0] - end_pos[0])**2 + (center[1] - end_pos[1])**2)**0.5)
+            pygame.draw.circle(screen, self.colors['reward_zone'], center, radius, 2)
+
         # Draw toolbar (clear it first)
         pygame.draw.rect(screen, self.colors['toolbar'], (self.width, 0, self.toolbar_width, self.height))
 
@@ -92,6 +106,7 @@ class LevelEditor:
             ("Goal", 'goal'),
             ("Wall", 'wall'),
             ("Eraser", 'eraser'),
+            ("Reward zone", 'reward_zone'),
             ("Clear All", 'clear'),
             (f"Current: {self.current_tool}", None),
             ("Save (S)", 'save'),
@@ -138,6 +153,16 @@ class LevelEditor:
                     self.finish_wall((x, y))
             elif self.current_tool == 'eraser':
                 self.erase(x, y)
+            elif self.current_tool == 'reward_zone':
+                if self.current_reward_zone is None:
+                    self.current_reward_zone = {'center': (x, y)}
+                else:
+                    end_pos = (x, y)
+                    radius = int(((self.current_reward_zone['center'][0] - end_pos[0])**2 +
+                                  (self.current_reward_zone['center'][1] - end_pos[1])**2)**0.5)
+                    self.current_reward_zone['radius'] = radius
+                    self.reward_zones.append(self.current_reward_zone)
+                    self.current_reward_zone = None
 
     def handle_mouse_drag(self, pos):
         if self.current_tool == 'eraser':
@@ -159,6 +184,8 @@ class LevelEditor:
         elif button_index == 3:
             self.current_tool = 'eraser'
         elif button_index == 4:
+            self.current_tool = 'reward_zone'
+        elif button_index == 5:
             self.clear_level()
         # Ignore the "Current: tool" button
         elif button_index == 6:
@@ -190,6 +217,7 @@ class LevelEditor:
         self.walls = []
         self.spawn = None
         self.goals = []
+        self.reward_zones = []
 
     def draw_text(self, screen, text, pos):
         text_surface = self.font.render(text, True, self.colors['text'])
@@ -290,6 +318,7 @@ class LevelEditor:
             self.walls = [pygame.Rect(*wall) for wall in level_data['walls']]
             self.spawn = tuple(level_data['spawn'])
             self.goals = [tuple(goal) for goal in level_data['rewards']]
+            self.reward_zones = level_data.get('reward_zones', [])
             print(f"Level loaded from {filepath}")
         except FileNotFoundError:
             print(f"Level file '{filepath}' not found")
@@ -298,7 +327,8 @@ class LevelEditor:
         level_data = {
             'walls': [(wall.x, wall.y, wall.width, wall.height) for wall in self.walls],
             'spawn': self.spawn,
-            'rewards': self.goals
+            'rewards': self.goals,
+            'reward_zones': self.reward_zones
         }
         filepath = os.path.join(self.levels_folder, f"{filename}.json")
         with open(filepath, 'w') as f:

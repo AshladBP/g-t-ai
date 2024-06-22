@@ -21,12 +21,14 @@ class Game:
             'yellow': (255, 255, 0),
             'purple': (128, 0, 128),
             'white': (255, 255, 255),
-            'gray': (200, 200, 200)
+            'gray': (200, 200, 200),
         }
         self.player = None
         self.walls = []
         self.goals = []
         self.raycast_dist = 75
+        self.reward_zones = []
+        self.colors['reward_zone'] = (0, 255, 0, 128)  # Semi-transparent green
         self.num_rays = 8
         self.ray_angles = np.linspace(0, 2 * np.pi, self.num_rays, endpoint=False)
         self.ray_distances = np.zeros(self.num_rays)
@@ -73,7 +75,12 @@ class Game:
         if self.current_level:
             self.player = Player(*self.current_level['spawn'])
             self.walls = [Wall(*wall) for wall in self.current_level['walls']]
-            self.goals = [Goal(*reward, 7) for reward in self.current_level['rewards']]
+            self.reward_zones = self.current_level.get('reward_zones', [])
+            self.goals = self._generate_rewards()
+
+            individual_rewards = self.current_level.get('rewards', [])
+            for reward in individual_rewards:
+                self.goals.append(Goal(*reward, 7))
         else:
             self.player = Player(self.width // 2, self.height // 2)
             self.walls = []
@@ -81,6 +88,7 @@ class Game:
         if WITH_BORDERS:
             self._setup_borders()
         return self._get_state(), 0, False
+
 
     def _setup_borders(self):
         for x in range(0, self.width, 50):
@@ -91,6 +99,24 @@ class Game:
             self.walls.append(Wall(self.width - 10, y, 10, 50))
 
 
+    def _generate_rewards(self):
+        rewards = []
+        for zone in self.reward_zones:
+            center_x, center_y = zone['center']
+            radius = zone['radius']
+
+            while True:
+                x = random.randint(center_x - radius, center_x + radius)
+                y = random.randint(center_y - radius, center_y + radius)
+
+                # Check if the point is within the circle and at least 50 pixels from borders
+                if ((x - center_x)**2 + (y - center_y)**2 <= radius**2 and
+                    x >= 50 and x <= self.width - 50 and y >= 50 and y <= self.height - 50):
+                    rewards.append(Goal(x, y, 7))
+                    break
+
+        return rewards
+        
     def step(self, action):
         self.player.update(action)
         self._cast_rays()
@@ -187,33 +213,37 @@ class Game:
         return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
     def render(self, surface):
-            surface.fill(self.colors['black'])
-            pygame.draw.rect(surface, self.colors['blue'], self.player.rect)
-            for wall in self.walls:
-                pygame.draw.rect(surface, self.colors['red'], wall.rect)
-            for goal in self.goals:
-                pygame.draw.circle(surface, self.colors['green'], goal.circle.center, goal.radius)
+        surface.fill(self.colors['black'])
+        pygame.draw.rect(surface, self.colors['blue'], self.player.rect)
+        for wall in self.walls:
+            pygame.draw.rect(surface, self.colors['red'], wall.rect)
+        for goal in self.goals:
+            pygame.draw.circle(surface, self.colors['green'], goal.circle.center, goal.radius)
 
-            # Draw raycasts
-            for i, end_point in enumerate(self.ray_endpoints):
-                if end_point:
-                    pygame.draw.line(surface, self.colors['yellow'], self.player.rect.center, end_point)
-                    if self.ray_distances[i] > 0:
-                        pygame.draw.circle(surface, self.colors['purple'], end_point, 3)
+        # Draw raycasts
+        for i, end_point in enumerate(self.ray_endpoints):
+            if end_point:
+                pygame.draw.line(surface, self.colors['yellow'], self.player.rect.center, end_point)
+                if self.ray_distances[i] > 0:
+                    pygame.draw.circle(surface, self.colors['purple'], end_point, 3)
 
-            # Draw line to objective
-            if self.goals:
-                goal = self.goals[0]
-                pygame.draw.line(surface, self.colors['white'], self.player.rect.center, goal.circle.center)
-                midpoint = ((self.player.rect.centerx + goal.circle.centerx) // 2,
-                            (self.player.rect.centery + goal.circle.centery) // 2)
-                distance = self._get_distance(self.player.rect.center, goal.circle.center)
-                angle = np.arctan2(goal.circle.centery - self.player.rect.centery,
-                                   goal.circle.centerx - self.player.rect.centerx)
-                angle_deg = np.degrees(angle)
-                font = pygame.font.Font(None, 24)
-                text = font.render(f"{distance:.1f}px, {angle_deg:.1f}°", True, self.colors['white'])
-                surface.blit(text, midpoint)
+        # Draw line to objective
+        if self.goals:
+            goal = self.goals[0]
+            pygame.draw.line(surface, self.colors['white'], self.player.rect.center, goal.circle.center)
+            midpoint = ((self.player.rect.centerx + goal.circle.centerx) // 2,
+                        (self.player.rect.centery + goal.circle.centery) // 2)
+            distance = self._get_distance(self.player.rect.center, goal.circle.center)
+            angle = np.arctan2(goal.circle.centery - self.player.rect.centery,
+                               goal.circle.centerx - self.player.rect.centerx)
+            angle_deg = np.degrees(angle)
+            font = pygame.font.Font(None, 24)
+            text = font.render(f"{distance:.1f}px, {angle_deg:.1f}°", True, self.colors['white'])
+            surface.blit(text, midpoint)
+
+        # Draw reward zones
+        for zone in self.reward_zones:
+            pygame.draw.circle(surface, self.colors['reward_zone'], zone['center'], zone['radius'], 2)
 
 class Player:
     def __init__(self, x, y):
