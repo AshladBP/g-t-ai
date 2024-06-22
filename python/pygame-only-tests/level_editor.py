@@ -34,7 +34,7 @@ class LevelEditor:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     self.handle_mouse_click(event.pos)
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_s:
+                    if event.key == pygame.K_v:
                         self.save_level_menu(screen)
                     elif event.key == pygame.K_l:
                         self.load_level_menu(screen)
@@ -111,7 +111,7 @@ class LevelEditor:
         self.draw_text(screen, "Goal (G)", (self.width + 100, 150))
         self.draw_text(screen, "Wall (W)", (self.width + 100, 250))
         self.draw_text(screen, f"Current: {self.current_tool}", (self.width + 100, 350))
-        self.draw_text(screen, "Save (S)", (self.width + 100, 450))
+        self.draw_text(screen, "Save (V)", (self.width + 100, 450))
         self.draw_text(screen, "Load (L)", (self.width + 100, 500))
 
     def draw_text(self, screen, text, pos):

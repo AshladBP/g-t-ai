@@ -18,8 +18,8 @@ def main():
     clock = pygame.time.Clock()
     font = pygame.font.Font(None, 24)
 
-    env = PlayerEnv()
     game = Game()
+    env = PlayerEnv()
 
     running = True
     mode = main_menu(screen, font)
@@ -30,7 +30,12 @@ def main():
             continue
 
         if mode == 'player':
-            player_mode(screen, font, env, clock)
+            level = level_selection_menu(screen, font, game.levels)
+            if level:
+                player_mode(screen, font, env, clock, level)
+            else:
+                mode = main_menu(screen, font)
+                continue
         elif mode == 'ai':
             level = level_selection_menu(screen, font, game.levels)
             if level:
@@ -118,8 +123,9 @@ def level_selection_menu(screen, font, levels):
 
         pygame.display.flip()
 
-def player_mode(screen, font, env, clock):
+def player_mode(screen, font, env, clock, level):
     game_surface = pygame.Surface((GAME_WIDTH, GAME_HEIGHT))
+    env.set_level(level)
     state, reward, done = env.reset()
     total_reward = 0
 

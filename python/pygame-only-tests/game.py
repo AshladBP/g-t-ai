@@ -1,6 +1,8 @@
 import pygame
 import numpy as np
 import random
+import os
+import json
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -30,26 +32,9 @@ class Game:
         self.ray_distances = np.zeros(self.num_rays)
         self.ray_endpoints = [None] * self.num_rays
 
-        self.levels = {
-            'level1': {
-                'walls': [
-                    (100, 100, 10, 200),
-                    (300, 300, 200, 10),
-                ],
-                'spawn': (50, 50),
-                'rewards': [(700, 500)],
-            },
-            'level2': {
-                'walls': [
-                    (200, 100, 10, 400),
-                    (400, 100, 10, 400),
-                ],
-                'spawn': (100, 100),
-                'rewards': [(600, 300), (700, 500)],
-            },
-        }
+        self.levels_folder = "levelsdata"
+        self.levels = self.load_all_levels()
         self.current_level = None
-
 
     def set_level(self, level_name):
         if level_name in self.levels:
@@ -93,18 +78,17 @@ class Game:
             self.player = Player(self.width // 2, self.height // 2)
             self.walls = []
             self.goals = [Goal(700, 500, 7)]
-
-        self._setup_walls()
+        if WITH_BORDERS:
+            self._setup_borders()
         return self._get_state(), 0, False
 
-    def _setup_walls(self):
-        if WITH_BORDERS:
-            for x in range(0, self.width, 50):
-                self.walls.append(Wall(x, 0, 50, 10))
-                self.walls.append(Wall(x, self.height - 10, 50, 10))
-            for y in range(10, self.height - 10, 50):
-                self.walls.append(Wall(0, y, 10, 50))
-                self.walls.append(Wall(self.width - 10, y, 10, 50))
+    def _setup_borders(self):
+        for x in range(0, self.width, 50):
+            self.walls.append(Wall(x, 0, 50, 10))
+            self.walls.append(Wall(x, self.height - 10, 50, 10))
+        for y in range(10, self.height - 10, 50):
+            self.walls.append(Wall(0, y, 10, 50))
+            self.walls.append(Wall(self.width - 10, y, 10, 50))
 
 
     def step(self, action):
