@@ -6,7 +6,6 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 MIN_WALLS = 1
 MAX_WALLS = 3
-WITH_WALLS = True
 WITH_BORDERS = True
 
 class Game:
@@ -107,16 +106,6 @@ class Game:
                 self.walls.append(Wall(0, y, 10, 50))
                 self.walls.append(Wall(self.width - 10, y, 10, 50))
 
-        if WITH_WALLS:
-            for _ in range(random.randint(MIN_WALLS, MAX_WALLS)):
-                x = random.randint(0, self.width)
-                y = random.randint(0, self.height)
-                width = random.randint(1, 10)
-                height = random.randint(50, 200)
-                if random.choice([True, False]):
-                    self.walls.append(Wall(x, y, width, height))
-                else:
-                    self.walls.append(Wall(x, y, height, width))
 
     def step(self, action):
         self.player.update(action)
