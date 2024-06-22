@@ -13,6 +13,7 @@ class LevelEditor:
         self.colors = {
             'background': (0, 0, 0),
             'wall': (255, 0, 0),
+            'wall_preview': (255, 100, 100),
             'spawn': (0, 0, 255),
             'goal': (0, 255, 0),
             'text': (255, 255, 255),
@@ -55,8 +56,19 @@ class LevelEditor:
                 if self.wall_start is None:
                     self.wall_start = (x, y)
                 else:
-                    self.walls.append((self.wall_start[0], self.wall_start[1], x - self.wall_start[0], y - self.wall_start[1]))
-                    self.wall_start = None
+                    self.finish_wall((x, y))
+
+    def finish_wall(self, end_pos):
+        if self.wall_start is not None:
+            x1, y1 = self.wall_start
+            x2, y2 = end_pos
+            x = min(x1, x2)
+            y = min(y1, y2)
+            width = abs(x2 - x1)
+            height = abs(y2 - y1)
+            if width > 0 and height > 0:
+                self.walls.append((x, y, width, height))
+            self.wall_start = None
 
     def handle_toolbar_click(self, y):
         if y < 100:
@@ -69,19 +81,30 @@ class LevelEditor:
     def draw(self, screen):
         # Draw game area
         pygame.draw.rect(screen, self.colors['background'], (0, 0, self.width, self.height))
-        
+
         # Draw walls
         for wall in self.walls:
             pygame.draw.rect(screen, self.colors['wall'], wall)
-        
+
+        # Draw wall preview
+        if self.wall_start is not None:
+            end_pos = pygame.mouse.get_pos()
+            x1, y1 = self.wall_start
+            x2, y2 = end_pos
+            x = min(x1, x2)
+            y = min(y1, y2)
+            width = abs(x2 - x1)
+            height = abs(y2 - y1)
+            pygame.draw.rect(screen, self.colors['wall_preview'], (x, y, width, height), 2)
+
         # Draw spawn point
         if self.spawn:
             pygame.draw.circle(screen, self.colors['spawn'], self.spawn, 5)
-        
+
         # Draw goals
         for goal in self.goals:
             pygame.draw.circle(screen, self.colors['goal'], goal, 5)
-        
+
         # Draw toolbar
         pygame.draw.rect(screen, (50, 50, 50), (self.width, 0, 200, self.height))
         self.draw_text(screen, "Spawn (S)", (self.width + 100, 50))
