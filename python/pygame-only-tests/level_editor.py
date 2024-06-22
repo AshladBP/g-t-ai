@@ -28,6 +28,7 @@ class LevelEditor:
         self.levels_folder = "levelsdata"
         os.makedirs(self.levels_folder, exist_ok=True)
         self.eraser_size = 10
+        self.back_button = pygame.Rect(10, self.height - 60, 180, 40)
 
     def run(self, screen, clock):
         running = True
@@ -36,7 +37,10 @@ class LevelEditor:
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    self.handle_mouse_click(event.pos)
+                    if self.back_button.collidepoint(event.pos):
+                        return  # Exit the level editor
+                    else:
+                        self.handle_mouse_click(event.pos)
                 elif event.type == pygame.MOUSEMOTION:
                     if event.buttons[0]:  # Left mouse button held down
                         self.handle_mouse_drag(event.pos)
@@ -97,22 +101,26 @@ class LevelEditor:
         for i, (text, tool) in enumerate(buttons):
             button_y = i * (button_height + button_spacing)
             button_rect = pygame.Rect(self.width + 10, button_y + 10, self.toolbar_width - 20, button_height)
-            
+
             if tool == self.current_tool:
                 pygame.draw.rect(screen, self.colors['hover'], button_rect)
             else:
                 pygame.draw.rect(screen, self.colors['button'], button_rect)
-            
+
             self.draw_text(screen, text, (button_rect.centerx, button_rect.centery))
 
         # Draw eraser preview if eraser tool is selected
         if self.current_tool == 'eraser':
             mouse_pos = pygame.mouse.get_pos()
             if mouse_pos[0] < self.width:  # Only draw in game area
-                pygame.draw.rect(screen, self.colors['eraser'], 
-                                (mouse_pos[0] - self.eraser_size // 2, 
-                                mouse_pos[1] - self.eraser_size // 2, 
+                pygame.draw.rect(screen, self.colors['eraser'],
+                                (mouse_pos[0] - self.eraser_size // 2,
+                                mouse_pos[1] - self.eraser_size // 2,
                                 self.eraser_size, self.eraser_size), 2)
+
+        # Draw back button
+        pygame.draw.rect(screen, self.colors['button'], self.back_button)
+        self.draw_text(screen, "Back", self.back_button.center)
 
     def handle_mouse_click(self, pos):
         x, y = pos
@@ -139,9 +147,9 @@ class LevelEditor:
         button_height = 50
         button_spacing = 10
         total_button_height = button_height + button_spacing
-        
+
         button_index = y // total_button_height
-        
+
         if button_index == 0:
             self.current_tool = 'spawn'
         elif button_index == 1:
@@ -159,7 +167,7 @@ class LevelEditor:
             self.load_level_menu(pygame.display.get_surface())
 
     def erase(self, x, y):
-        eraser_rect = pygame.Rect(x - self.eraser_size // 2, y - self.eraser_size // 2, 
+        eraser_rect = pygame.Rect(x - self.eraser_size // 2, y - self.eraser_size // 2,
                                   self.eraser_size, self.eraser_size)
         self.walls = [wall for wall in self.walls if not eraser_rect.colliderect(wall)]
         self.goals = [goal for goal in self.goals if not eraser_rect.collidepoint(goal)]
@@ -240,6 +248,8 @@ class LevelEditor:
                         for i, button in enumerate(buttons):
                             if button.collidepoint(mouse_pos):
                                 return options[i + scroll_offset]
+                        if self.back_button.collidepoint(mouse_pos):
+                            return None
                     elif event.button == 4:  # Scroll up
                         scroll_offset = max(0, scroll_offset - 1)
                     elif event.button == 5:  # Scroll down
@@ -262,6 +272,10 @@ class LevelEditor:
                 self.draw_text(screen, "↑", (self.width // 2, start_y - 20))
             if scroll_offset + max_buttons < len(options):
                 self.draw_text(screen, "↓", (self.width // 2, start_y + max_buttons * (button_height + 10) + 20))
+
+            # Draw back button
+            pygame.draw.rect(screen, self.colors['button'], self.back_button)
+            self.draw_text(screen, "Back", self.back_button.center)
 
             pygame.display.flip()
 

@@ -37,7 +37,7 @@ def main():
                 mode = main_menu(screen, font)
                 continue
         elif mode == 'ai':
-            level = level_selection_menu(screen, font, game.levels)
+            level = level_selection_menu(screen, font, game.levels, ai_mode=True)
             if level:
                 ai_mode(screen, font, env, clock, level)
             else:
@@ -83,7 +83,7 @@ def main_menu(screen, font):
 
         pygame.display.flip()
 
-def level_selection_menu(screen, font, levels):
+def level_selection_menu(screen, font, levels, ai_mode=False):
     buttons = []
     button_height = 50
     button_width = 300
@@ -91,9 +91,14 @@ def level_selection_menu(screen, font, levels):
     max_buttons = 8
     scroll_offset = 0
 
+    back_button = pygame.Rect(10, SCREEN_HEIGHT - 60, 180, 40)
+
     while True:
         screen.fill((0, 0, 0))
         draw_text(screen, font, 'Select Level', (255, 255, 255), (SCREEN_WIDTH // 2, 50))
+
+        if ai_mode:
+            draw_text(screen, font, 'Warning: PyTorch will load causing a lagspike, don\'t panic', (255, 255, 0), (SCREEN_WIDTH // 2, 80))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -103,6 +108,8 @@ def level_selection_menu(screen, font, levels):
                     for i, button in enumerate(buttons):
                         if button.collidepoint(event.pos):
                             return list(levels.keys())[i + scroll_offset]
+                    if back_button.collidepoint(event.pos):
+                        return None
                 elif event.button == 4:  # Scroll up
                     scroll_offset = max(0, scroll_offset - 1)
                 elif event.button == 5:  # Scroll down
@@ -121,6 +128,10 @@ def level_selection_menu(screen, font, levels):
         if scroll_offset + max_buttons < len(levels):
             draw_text(screen, font, "↓", (255, 255, 255), (SCREEN_WIDTH // 2, start_y + max_buttons * (button_height + 10) + 20))
 
+        # Draw back button
+        pygame.draw.rect(screen, (100, 100, 100), back_button)
+        draw_text(screen, font, "Back", (255, 255, 255), back_button.center)
+
         pygame.display.flip()
 
 def player_mode(screen, font, env, clock, level):
@@ -129,10 +140,15 @@ def player_mode(screen, font, env, clock, level):
     state, reward, done = env.reset()
     total_reward = 0
 
+    back_button = pygame.Rect(10, SCREEN_HEIGHT - 60, 180, 40)
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if back_button.collidepoint(event.pos):
+                    return
 
         keys = pygame.key.get_pressed()
         action = -1
@@ -154,6 +170,10 @@ def player_mode(screen, font, env, clock, level):
         screen.blit(game_surface, (200, 0))
         draw_text(screen, font, f'Total Reward: {total_reward:.2f}', (255, 255, 255), (SCREEN_WIDTH // 2, 30))
 
+        # Draw back button
+        pygame.draw.rect(screen, (100, 100, 100), back_button)
+        draw_text(screen, font, "Back", (255, 255, 255), back_button.center)
+
         pygame.display.flip()
         clock.tick(60)
 
@@ -171,7 +191,6 @@ def ai_mode(screen, font, env, clock, level):
         "current_reward": 0,
         "current_loss_actor": 0,
         "current_loss_critic": 0,
-        "observation": [],
         "episode": 0,
         "time_steps": 0,
         "learning_steps": 0,
@@ -256,7 +275,7 @@ def draw_stats(screen, font, stats):
             text = f"{key}: {value:.2f}"
         else:
             text = f"{key}: {value}"
-        draw_text(screen, font, text, (255, 255, 255), (SCREEN_WIDTH - 200, y))
+        draw_text(screen, font, text, (255, 255, 255), (SCREEN_WIDTH - 100, y))
         y += 30
 
 def draw_control_panel(screen, font, paused, render_game):
@@ -279,6 +298,8 @@ def game_over_menu(screen, font, total_reward):
         pygame.Rect(450, 400, 300, 50)
     ]
 
+    back_button = pygame.Rect(10, SCREEN_HEIGHT - 60, 180, 40)
+
     while True:
         screen.fill((0, 0, 0))
         draw_text(screen, font, 'Game Over', (255, 255, 255), (SCREEN_WIDTH // 2, 100))
@@ -292,11 +313,17 @@ def game_over_menu(screen, font, total_reward):
                     return
                 elif buttons[1].collidepoint(event.pos):
                     return 'main_menu'
+                elif back_button.collidepoint(event.pos):
+                    return 'main_menu'
 
         pygame.draw.rect(screen, (100, 100, 100), buttons[0])
         pygame.draw.rect(screen, (100, 100, 100), buttons[1])
         draw_text(screen, font, 'Play Again', (255, 255, 255), buttons[0].center)
         draw_text(screen, font, 'Main Menu', (255, 255, 255), buttons[1].center)
+
+        # Draw back button
+        pygame.draw.rect(screen, (100, 100, 100), back_button)
+        draw_text(screen, font, "Back to Menu", (255, 255, 255), back_button.center)
 
         pygame.display.flip()
 
