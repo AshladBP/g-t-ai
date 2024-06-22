@@ -133,7 +133,7 @@ class Game:
                     return level, 'ai'
             if button_3.collidepoint((mx, my)):
                 if click:
-                    return None, None
+                    self.main_menu()
 
             pygame.display.update()
             self.clock.tick(60)

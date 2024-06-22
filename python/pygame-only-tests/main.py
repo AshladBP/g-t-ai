@@ -62,7 +62,6 @@ def main():
             pass
             # The outer loop will automatically start a new game with the same level and mode
 
-    env.close()
     pygame.quit()
 
 if __name__ == "__main__":
