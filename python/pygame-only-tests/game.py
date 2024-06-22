@@ -1,7 +1,6 @@
 import pygame
 import numpy as np
 import random
-import sys
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -13,10 +12,6 @@ WITH_BORDERS = True
 class Game:
     def __init__(self):
         self.width, self.height = SCREEN_WIDTH, SCREEN_HEIGHT
-        self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("AI Training Environment")
-        self.clock = pygame.time.Clock()
-
         self.colors = {
             'black': (0, 0, 0),
             'red': (255, 0, 0),
@@ -34,6 +29,7 @@ class Game:
         self.num_rays = 8
         self.ray_angles = np.linspace(0, 2 * np.pi, self.num_rays, endpoint=False)
         self.ray_distances = np.zeros(self.num_rays)
+        self.ray_endpoints = [None] * self.num_rays
 
         self.levels = {
             'level1': {
@@ -54,124 +50,6 @@ class Game:
             },
         }
         self.current_level = None
-        self.font = pygame.font.Font(None, 36)
-
-    # Menu logic
-    def draw_text(self, text, font, color, surface, x, y):
-        textobj = font.render(text, 1, color)
-        textrect = textobj.get_rect()
-        textrect.topleft = (x, y)
-        surface.blit(textobj, textrect)
-
-    def main_menu(self):
-        while True:
-            pygame.display.flip()
-            self.screen.fill(self.colors['black'])
-            self.draw_text('Main Menu', self.font, self.colors['white'], self.screen, 20, 20)
-
-            mx, my = pygame.mouse.get_pos()
-
-            button_1 = pygame.Rect(50, 100, 200, 50)
-            button_2 = pygame.Rect(50, 200, 200, 50)
-            
-            pygame.draw.rect(self.screen, self.colors['gray'], button_1)
-            pygame.draw.rect(self.screen, self.colors['gray'], button_2)
-
-            self.draw_text('Level 1', self.font, self.colors['black'], self.screen, 60, 110)
-            self.draw_text('Level 2', self.font, self.colors['black'], self.screen, 60, 210)
-
-            click = False
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return None, None
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        click = True
-
-            if button_1.collidepoint((mx, my)):
-                if click:
-                    return self.level_menu('level1')
-            if button_2.collidepoint((mx, my)):
-                if click:
-                    return self.level_menu('level2')
-
-            pygame.display.update()
-            self.clock.tick(60)
-
-    def level_menu(self, level):
-        while True:
-            self.screen.fill(self.colors['black'])
-            self.draw_text(f'Level {level[-1]} Menu', self.font, self.colors['white'], self.screen, 20, 20)
-
-            mx, my = pygame.mouse.get_pos()
-
-            button_1 = pygame.Rect(50, 100, 200, 50)
-            button_2 = pygame.Rect(50, 200, 200, 50)
-            button_3 = pygame.Rect(50, 300, 200, 50)
-            
-            pygame.draw.rect(self.screen, self.colors['gray'], button_1)
-            pygame.draw.rect(self.screen, self.colors['gray'], button_2)
-            pygame.draw.rect(self.screen, self.colors['gray'], button_3)
-
-            self.draw_text('Player Mode', self.font, self.colors['black'], self.screen, 60, 110)
-            self.draw_text('AI Mode', self.font, self.colors['black'], self.screen, 60, 210)
-            self.draw_text('Back', self.font, self.colors['black'], self.screen, 60, 310)
-
-            click = False
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return None, None
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        click = True
-
-            if button_1.collidepoint((mx, my)):
-                if click:
-                    return level, 'player'
-            if button_2.collidepoint((mx, my)):
-                if click:
-                    return level, 'ai'
-            if button_3.collidepoint((mx, my)):
-                if click:
-                    self.main_menu()
-
-            pygame.display.update()
-            self.clock.tick(60)
-
-    def game_over_menu(self, score):
-        while True:
-            self.screen.fill(self.colors['black'])
-            self.draw_text('Game Over', self.font, self.colors['white'], self.screen, 20, 20)
-            self.draw_text(f'Score: {score}', self.font, self.colors['white'], self.screen, 20, 60)
-
-            mx, my = pygame.mouse.get_pos()
-
-            button_1 = pygame.Rect(50, 100, 200, 50)
-            button_2 = pygame.Rect(50, 200, 200, 50)
-            
-            pygame.draw.rect(self.screen, self.colors['gray'], button_1)
-            pygame.draw.rect(self.screen, self.colors['gray'], button_2)
-
-            self.draw_text('Play Again', self.font, self.colors['black'], self.screen, 60, 110)
-            self.draw_text('Main Menu', self.font, self.colors['black'], self.screen, 60, 210)
-
-            click = False
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return 'quit'
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        click = True
-
-            if button_1.collidepoint((mx, my)):
-                if click:
-                    return 'play_again'
-            if button_2.collidepoint((mx, my)):
-                if click:
-                    return 'main_menu'
-
-            pygame.display.update()
-            self.clock.tick(60)
 
     def set_level(self, level_name):
         if level_name in self.levels:
@@ -182,13 +60,13 @@ class Game:
 
     def reset(self):
         if self.current_level:
-            self.player = self.Player(*self.current_level['spawn'])
-            self.walls = [self.Wall(*wall) for wall in self.current_level['walls']]
-            self.goals = [self.Goal(*reward, 7) for reward in self.current_level['rewards']]
+            self.player = Player(*self.current_level['spawn'])
+            self.walls = [Wall(*wall) for wall in self.current_level['walls']]
+            self.goals = [Goal(*reward, 7) for reward in self.current_level['rewards']]
         else:
-            self.player = self.Player(self.width // 2, self.height // 2)
+            self.player = Player(self.width // 2, self.height // 2)
             self.walls = []
-            self.goals = [self.Goal(700, 500, 7)]
+            self.goals = [Goal(700, 500, 7)]
 
         self._setup_walls()
         return self._get_state(), 0, False
@@ -196,11 +74,11 @@ class Game:
     def _setup_walls(self):
         if WITH_BORDERS:
             for x in range(0, self.width, 50):
-                self.walls.append(self.Wall(x, 0, 50, 10))
-                self.walls.append(self.Wall(x, self.height - 10, 50, 10))
+                self.walls.append(Wall(x, 0, 50, 10))
+                self.walls.append(Wall(x, self.height - 10, 50, 10))
             for y in range(10, self.height - 10, 50):
-                self.walls.append(self.Wall(0, y, 10, 50))
-                self.walls.append(self.Wall(self.width - 10, y, 10, 50))
+                self.walls.append(Wall(0, y, 10, 50))
+                self.walls.append(Wall(self.width - 10, y, 10, 50))
 
         if WITH_WALLS:
             for _ in range(random.randint(MIN_WALLS, MAX_WALLS)):
@@ -209,9 +87,9 @@ class Game:
                 width = random.randint(1, 10)
                 height = random.randint(50, 200)
                 if random.choice([True, False]):
-                    self.walls.append(self.Wall(x, y, width, height))
+                    self.walls.append(Wall(x, y, width, height))
                 else:
-                    self.walls.append(self.Wall(x, y, height, width))
+                    self.walls.append(Wall(x, y, height, width))
 
     def step(self, action):
         self.player.update(action)
@@ -234,20 +112,21 @@ class Game:
     def _get_state(self):
         player_x, player_y = self.player.rect.center
         goal_x, goal_y = self.goals[0].circle.center if self.goals else (0, 0)
-        
+
         player_to_goal_x = goal_x - player_x
         player_to_goal_y = goal_y - player_y
-        
+
         distance = np.sqrt(player_to_goal_x**2 + player_to_goal_y**2)
         normalized_distance = distance / np.sqrt(SCREEN_WIDTH**2 + SCREEN_HEIGHT**2)
-        
+
         angle = np.arctan2(player_to_goal_y, player_to_goal_x)
         normalized_angle = (angle + np.pi) / (2 * np.pi)
-        
+
         return np.concatenate(([normalized_angle, normalized_distance], self.ray_distances))
 
     def _cast_rays(self):
         self.ray_distances = np.zeros(self.num_rays)
+        self.ray_endpoints = [None] * self.num_rays
         for i, angle in enumerate(self.ray_angles):
             end_pos = self._get_ray_end_pos(angle)
             intersection = self._get_ray_intersection(end_pos)
@@ -255,6 +134,9 @@ class Game:
                 ray_length = self._get_distance(self.player.rect.center, intersection)
                 normalized_distance = 1 - (ray_length / self.raycast_dist)
                 self.ray_distances[i] = normalized_distance
+                self.ray_endpoints[i] = intersection
+            else:
+                self.ray_endpoints[i] = end_pos
 
     def _get_ray_end_pos(self, angle):
         dx = np.cos(angle)
@@ -287,7 +169,7 @@ class Game:
         x2, y2 = p2
         x3, y3 = p3
         x4, y4 = p4
-        
+
         denom = (y4-y3)*(x2-x1) - (x4-x3)*(y2-y1)
         if denom == 0:
             return None
@@ -304,46 +186,58 @@ class Game:
     def _get_distance(self, p1, p2):
         return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
-    def render(self):
-        self.screen.fill(self.colors['black'])
-        pygame.draw.rect(self.screen, self.colors['blue'], self.player.rect)
-        for wall in self.walls:
-            pygame.draw.rect(self.screen, self.colors['red'], wall.rect)
-        for goal in self.goals:
-            pygame.draw.circle(self.screen, self.colors['green'], goal.circle.center, goal.radius)
+    def render(self, surface):
+            surface.fill(self.colors['black'])
+            pygame.draw.rect(surface, self.colors['blue'], self.player.rect)
+            for wall in self.walls:
+                pygame.draw.rect(surface, self.colors['red'], wall.rect)
+            for goal in self.goals:
+                pygame.draw.circle(surface, self.colors['green'], goal.circle.center, goal.radius)
 
-        # Draw raycasts
-        for i, angle in enumerate(self.ray_angles):
-            start_pos = self.player.rect.center
-            end_pos = self._get_ray_end_pos(angle)
-            pygame.draw.line(self.screen, self.colors['purple'], start_pos, end_pos, 1)
+            # Draw raycasts
+            for i, end_point in enumerate(self.ray_endpoints):
+                if end_point:
+                    pygame.draw.line(surface, self.colors['yellow'], self.player.rect.center, end_point)
+                    if self.ray_distances[i] > 0:
+                        pygame.draw.circle(surface, self.colors['purple'], end_point, 3)
 
-        pygame.display.flip()
-        self.clock.tick(60)
+            # Draw line to objective
+            if self.goals:
+                goal = self.goals[0]
+                pygame.draw.line(surface, self.colors['white'], self.player.rect.center, goal.circle.center)
+                midpoint = ((self.player.rect.centerx + goal.circle.centerx) // 2,
+                            (self.player.rect.centery + goal.circle.centery) // 2)
+                distance = self._get_distance(self.player.rect.center, goal.circle.center)
+                angle = np.arctan2(goal.circle.centery - self.player.rect.centery,
+                                   goal.circle.centerx - self.player.rect.centerx)
+                angle_deg = np.degrees(angle)
+                font = pygame.font.Font(None, 24)
+                text = font.render(f"{distance:.1f}px, {angle_deg:.1f}°", True, self.colors['white'])
+                surface.blit(text, midpoint)
+                
+class Player:
+    def __init__(self, x, y):
+        self.rect = pygame.Rect(x+3, y+3, 10, 10)
+        self.speed = 4
 
-    class Player:
-        def __init__(self, x, y):
-            self.rect = pygame.Rect(x+3, y+3, 10, 10)
-            self.speed = 4
+    def update(self, action):
+        if action == 0:  # right
+            self.rect.x += self.speed
+        elif action == 1:  # left
+            self.rect.x -= self.speed
+        elif action == 2:  # up
+            self.rect.y -= self.speed
+        elif action == 3:  # down
+            self.rect.y += self.speed
 
-        def update(self, action):
-            if action == 0:  # right
-                self.rect.x += self.speed
-            elif action == 1:  # left
-                self.rect.x -= self.speed
-            elif action == 2:  # up
-                self.rect.y -= self.speed
-            elif action == 3:  # down
-                self.rect.y += self.speed
+        # Collision detection with screen boundaries
+        self.rect.clamp_ip(pygame.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
 
-            # Collision detection with screen boundaries
-            self.rect.clamp_ip(pygame.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+class Wall:
+    def __init__(self, x, y, width, height):
+        self.rect = pygame.Rect(x, y, width, height)
 
-    class Wall:
-        def __init__(self, x, y, width, height):
-            self.rect = pygame.Rect(x, y, width, height)
-
-    class Goal:
-        def __init__(self, x, y, radius):
-            self.circle = pygame.Rect(x - radius, y - radius, radius * 2, radius * 2)
-            self.radius = radius
+class Goal:
+    def __init__(self, x, y, radius):
+        self.circle = pygame.Rect(x - radius, y - radius, radius * 2, radius * 2)
+        self.radius = radius
