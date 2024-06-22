@@ -1,9 +1,9 @@
 import pygame
-import random
+import os
 from game import Game
 from player_env import PlayerEnv
 from agents.ppo import Agent
-import numpy as np
+from level_editor import LevelEditor
 import time
 
 SCREEN_WIDTH = 1200
@@ -19,6 +19,7 @@ def main():
     font = pygame.font.Font(None, 24)
 
     env = PlayerEnv()
+    game = Game()
 
     running = True
     mode = main_menu(screen, font)
@@ -31,12 +32,16 @@ def main():
         if mode == 'player':
             player_mode(screen, font, env, clock)
         elif mode == 'ai':
-            level = level_selection_menu(screen, font)
+            level = level_selection_menu(screen, font, game.levels)
             if level:
                 ai_mode(screen, font, env, clock, level)
             else:
                 mode = main_menu(screen, font)
                 continue
+        elif mode == 'editor':
+            level_editor = LevelEditor(GAME_WIDTH, GAME_HEIGHT)
+            level_editor.run(screen, clock)
+            game.levels = game.load_all_levels()  # Reload levels after editing
 
         mode = main_menu(screen, font)
 
@@ -44,8 +49,9 @@ def main():
 
 def main_menu(screen, font):
     buttons = [
-        pygame.Rect(450, 200, 300, 50),
-        pygame.Rect(450, 300, 300, 50)
+        pygame.Rect(450, 150, 300, 50),
+        pygame.Rect(450, 250, 300, 50),
+        pygame.Rect(450, 350, 300, 50)
     ]
 
     while True:
@@ -60,42 +66,55 @@ def main_menu(screen, font):
                     return 'player'
                 elif buttons[1].collidepoint(event.pos):
                     return 'ai'
+                elif buttons[2].collidepoint(event.pos):
+                    return 'editor'
 
         pygame.draw.rect(screen, (100, 100, 100), buttons[0])
         pygame.draw.rect(screen, (100, 100, 100), buttons[1])
+        pygame.draw.rect(screen, (100, 100, 100), buttons[2])
         draw_text(screen, font, 'Player Mode', (255, 255, 255), buttons[0].center)
         draw_text(screen, font, 'AI Mode', (255, 255, 255), buttons[1].center)
+        draw_text(screen, font, 'Level Editor', (255, 255, 255), buttons[2].center)
 
         pygame.display.flip()
 
-def level_selection_menu(screen, font):
-    buttons = [
-        pygame.Rect(450, 200, 300, 50),
-        pygame.Rect(450, 300, 300, 50),
-        pygame.Rect(450, 400, 300, 50)
-    ]
+def level_selection_menu(screen, font, levels):
+    buttons = []
+    button_height = 50
+    button_width = 300
+    start_y = 100
+    max_buttons = 8
+    scroll_offset = 0
 
     while True:
         screen.fill((0, 0, 0))
-        draw_text(screen, font, 'Select Level', (255, 255, 255), (SCREEN_WIDTH // 2, 100))
+        draw_text(screen, font, 'Select Level', (255, 255, 255), (SCREEN_WIDTH // 2, 50))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return None
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if buttons[0].collidepoint(event.pos):
-                    return 'level1'
-                elif buttons[1].collidepoint(event.pos):
-                    return 'level2'
-                elif buttons[2].collidepoint(event.pos):
-                    return None
+                if event.button == 1:  # Left mouse button
+                    for i, button in enumerate(buttons):
+                        if button.collidepoint(event.pos):
+                            return list(levels.keys())[i + scroll_offset]
+                elif event.button == 4:  # Scroll up
+                    scroll_offset = max(0, scroll_offset - 1)
+                elif event.button == 5:  # Scroll down
+                    scroll_offset = min(len(levels) - max_buttons, scroll_offset + 1)
 
-        pygame.draw.rect(screen, (100, 100, 100), buttons[0])
-        pygame.draw.rect(screen, (100, 100, 100), buttons[1])
-        pygame.draw.rect(screen, (100, 100, 100), buttons[2])
-        draw_text(screen, font, 'Level 1', (255, 255, 255), buttons[0].center)
-        draw_text(screen, font, 'Level 2', (255, 255, 255), buttons[1].center)
-        draw_text(screen, font, 'Back to Main Menu', (255, 255, 255), buttons[2].center)
+        buttons = []
+        for i, level_name in enumerate(list(levels.keys())[scroll_offset:scroll_offset + max_buttons]):
+            button = pygame.Rect(SCREEN_WIDTH // 2 - button_width // 2, start_y + i * (button_height + 10), button_width, button_height)
+            buttons.append(button)
+            pygame.draw.rect(screen, (100, 100, 100), button)
+            draw_text(screen, font, level_name, (255, 255, 255), button.center)
+
+        # Draw scroll indicators
+        if scroll_offset > 0:
+            draw_text(screen, font, "↑", (255, 255, 255), (SCREEN_WIDTH // 2, start_y - 20))
+        if scroll_offset + max_buttons < len(levels):
+            draw_text(screen, font, "↓", (255, 255, 255), (SCREEN_WIDTH // 2, start_y + max_buttons * (button_height + 10) + 20))
 
         pygame.display.flip()
 
@@ -222,6 +241,7 @@ def ai_mode(screen, font, env, clock, level):
         draw_text(screen, font, "Back to Menu", (255, 255, 255), back_button.center)
 
         pygame.display.flip()
+        clock.tick(60)
 
 def draw_stats(screen, font, stats):
     y = 10

@@ -51,12 +51,39 @@ class Game:
         }
         self.current_level = None
 
+
     def set_level(self, level_name):
         if level_name in self.levels:
             self.current_level = self.levels[level_name]
             self.reset()
         else:
             raise ValueError(f"Level '{level_name}' not found")
+
+    def load_level_from_json(self, filename):
+        try:
+            with open(filename, 'r') as f:
+                self.current_level = json.load(f)
+        except FileNotFoundError:
+            raise ValueError(f"Level file '{filename}' not found")
+
+    def save_level_to_json(self, filename):
+        level_data = {
+            'walls': [wall.rect for wall in self.walls],
+            'spawn': self.player.rect.topleft,
+            'rewards': [goal.circle.center for goal in self.goals]
+        }
+        with open(filename, 'w') as f:
+            json.dump(level_data, f)
+
+    def load_all_levels(self):
+        levels = {}
+        for filename in os.listdir(self.levels_folder):
+            if filename.endswith('.json'):
+                level_name = os.path.splitext(filename)[0]
+                filepath = os.path.join(self.levels_folder, filename)
+                with open(filepath, 'r') as f:
+                    levels[level_name] = json.load(f)
+        return levels
 
     def reset(self):
         if self.current_level:
@@ -214,7 +241,7 @@ class Game:
                 font = pygame.font.Font(None, 24)
                 text = font.render(f"{distance:.1f}px, {angle_deg:.1f}°", True, self.colors['white'])
                 surface.blit(text, midpoint)
-                
+
 class Player:
     def __init__(self, x, y):
         self.rect = pygame.Rect(x+3, y+3, 10, 10)
