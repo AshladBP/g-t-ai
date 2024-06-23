@@ -2,11 +2,10 @@ import pygame
 from player_env import PlayerEnv
 
 class PlayerMode:
-    def __init__(self, screen, font, game, clock):
+    def __init__(self, screen, font, game):
         self.screen = screen
         self.font = font
         self.game = game
-        self.clock = clock
         self.env = PlayerEnv()
 
     def run(self):
@@ -102,7 +101,6 @@ class PlayerMode:
             self.draw_text("Back", back_button.center)
 
             pygame.display.flip()
-            self.clock.tick(60)
 
             if done:
                 break

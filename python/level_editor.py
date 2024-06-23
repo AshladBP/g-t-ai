@@ -34,7 +34,7 @@ class LevelEditor:
         self.back_button = pygame.Rect(10, self.height - 60, 180, 40)
 
 
-    def run(self, screen, clock):
+    def run(self, screen):
         running = True
         while running:
             for event in pygame.event.get():
@@ -56,7 +56,6 @@ class LevelEditor:
 
             self.draw(screen)
             pygame.display.flip()
-            clock.tick(60)
 
     def draw(self, screen):
         # Draw game area

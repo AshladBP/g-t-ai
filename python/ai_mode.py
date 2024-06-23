@@ -5,11 +5,10 @@ from player_env import PlayerEnv
 from agents.ppo import Agent
 
 class AIMode:
-    def __init__(self, screen, font, game, clock):
+    def __init__(self, screen, font, game):
         self.screen = screen
         self.font = font
         self.game = game
-        self.clock = clock
         self.env = PlayerEnv()
         self.agent = Agent(nb_actions=4, batch_size=1024, alpha=0.0003, nb_epochs=4, input_dims=(10,))
         self.agent.models_dir = "models_data"
@@ -173,7 +172,6 @@ class AIMode:
             self.draw_control_panel(paused, render_game, pause_button, render_button, load_button, save_button, back_button)
 
             pygame.display.flip()
-            self.clock.tick(60)
 
     def draw_stats(self, stats):
         y = 10

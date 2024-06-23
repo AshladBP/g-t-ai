@@ -3,6 +3,7 @@ from game import Game
 from player_mode import PlayerMode
 from ai_mode import AIMode
 from level_editor import LevelEditor
+from curriculum_editor import curriculum_editor_mode
 
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 600
@@ -13,7 +14,6 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("AI Training Environment")
-    clock = pygame.time.Clock()
     font = pygame.font.Font(None, 24)
 
     game = Game()
@@ -27,30 +27,34 @@ def main():
             continue
 
         if mode == 'player':
-            player_mode = PlayerMode(screen, font, game, clock)
+            player_mode = PlayerMode(screen, font, game)
             mode = player_mode.run()
         elif mode == 'ai':
-            ai_mode = AIMode(screen, font, game, clock)
+            ai_mode = AIMode(screen, font, game)
             mode = ai_mode.run()
         elif mode == 'editor':
             level_editor = LevelEditor(GAME_WIDTH, GAME_HEIGHT)
-            level_editor.run(screen, clock)
+            level_editor.run(screen)
             game.levels = game.load_all_levels()  # Reload levels after editing
-
-        mode = main_menu(screen, font)
+        elif mode == 'curriculum':
+            curriculum_editor_mode(screen, font, game)
+            mode = main_menu(screen, font)
+        else:
+            mode = main_menu(screen, font)
 
     pygame.quit()
 
 def main_menu(screen, font):
     buttons = [
-        pygame.Rect(450, 150, 300, 50),
-        pygame.Rect(450, 250, 300, 50),
-        pygame.Rect(450, 350, 300, 50)
+        pygame.Rect(450, 100, 300, 50),
+        pygame.Rect(450, 200, 300, 50),
+        pygame.Rect(450, 300, 300, 50),
+        pygame.Rect(450, 400, 300, 50)  # New button for Curriculum Editor
     ]
 
     while True:
         screen.fill((0, 0, 0))
-        draw_text(screen, font, 'Main Menu', (255, 255, 255), (SCREEN_WIDTH // 2, 100))
+        draw_text(screen, font, 'Main Menu', (255, 255, 255), (SCREEN_WIDTH // 2, 50))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -62,13 +66,17 @@ def main_menu(screen, font):
                     return 'ai'
                 elif buttons[2].collidepoint(event.pos):
                     return 'editor'
+                elif buttons[3].collidepoint(event.pos):
+                    return 'curriculum'  # New option for Curriculum Editor
 
         pygame.draw.rect(screen, (100, 100, 100), buttons[0])
         pygame.draw.rect(screen, (100, 100, 100), buttons[1])
         pygame.draw.rect(screen, (100, 100, 100), buttons[2])
+        pygame.draw.rect(screen, (100, 100, 100), buttons[3])  # New button
         draw_text(screen, font, 'Player Mode', (255, 255, 255), buttons[0].center)
         draw_text(screen, font, 'AI Mode', (255, 255, 255), buttons[1].center)
         draw_text(screen, font, 'Level Editor', (255, 255, 255), buttons[2].center)
+        draw_text(screen, font, 'Curriculum Editor (WIP)', (255, 255, 255), buttons[3].center)  # New button text
 
         pygame.display.flip()
 
@@ -78,4 +86,4 @@ def draw_text(screen, font, text, color, position):
     screen.blit(text_surface, text_rect)
 
 if __name__ == "__main__":
-    main()  
+    main()
