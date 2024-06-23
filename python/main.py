@@ -1,89 +1,81 @@
-from time import sleep
-from pygame_env import PlayerEnv
-import numpy as np
-from ppo import Agent
-import matplotlib.pyplot as plt
+import pygame
+from game import Game
+from player_mode import PlayerMode
+from ai_mode import AIMode
+from level_editor import LevelEditor
 
-LOAD = True
-SAVE = True
-RENDER = True
+SCREEN_WIDTH = 1200
+SCREEN_HEIGHT = 600
+GAME_WIDTH = 800
+GAME_HEIGHT = 600
 
-def plot_learning_curve(learning_steps, scores, avg_last_10_scores, label, figure_file):
-    plt.figure()
-    min_length = min(len(learning_steps), len(scores))
-    plt.plot(learning_steps[:min_length], scores[:min_length], label=f'{label} Score', linestyle='--')
-    if len(avg_last_10_scores) > 0:
-        plt.plot(learning_steps[:len(avg_last_10_scores)], avg_last_10_scores, label=f'{label} Avg last 10')
-    plt.xlabel('Learning Steps')
-    plt.ylabel('Score')
-    plt.xscale('log')
-    plt.title('Learning Curve')
-    plt.legend()
-    plt.savefig(figure_file)
-    plt.show()
-    plt.close()
+def main():
+    pygame.init()
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("AI Training Environment")
+    clock = pygame.time.Clock()
+    font = pygame.font.Font(None, 24)
 
-if __name__ == '__main__':
-    try:
-        env = PlayerEnv()
-        N = 1024
-        batch_size = 1024 
-        nb_epochs = 4
-        alpha = 0.0003
-        max_time_steps = 500_000
-        figure_file = 'plots/cartpole_single_batch_size.png'
+    game = Game()
 
-        learning_steps = []
-        score_history = []
-        avg_last_10_scores = []
-        label = f'Batch size {batch_size}'
+    running = True
+    mode = main_menu(screen, font)
 
-        agent = Agent(nb_actions=4, batch_size=batch_size, alpha=alpha, nb_epochs=nb_epochs, input_dims=(10,))
-        if LOAD:
-            agent.load_models()
-        learn_iters = 0
-        curr_step = 0
-        curr_episode = 0
+    while running:
+        if mode is None:
+            running = False
+            continue
 
-        while curr_step < max_time_steps:
-            curr_episode += 1
-            env.reset()
-            observation, _, _ = env.step(0)
-            done = False
-            score = 0
-            while not done:
-                action, prob, val = agent.choose_action(observation)
-                observation_, reward, done = env.step(action)
-                if RENDER:
-                    env.render()
-                score += reward
-                agent.remember(observation, action, prob, val, reward, done)
-                if curr_step % N == 0:
-                    agent.learn()
-                    learn_iters += 1
-                    learning_steps.append(curr_step)
-                    if score_history:
-                        score_history.append(score_history[-1])
-                        if len(score_history) >= 10:
-                            avg_last_10_scores.append(np.mean(score_history[-10:]))
-                        else:
-                            avg_last_10_scores.append(np.mean(score_history[:len(score_history)]))
-                observation = observation_
-                curr_step += 1
+        if mode == 'player':
+            player_mode = PlayerMode(screen, font, game, clock)
+            mode = player_mode.run()
+        elif mode == 'ai':
+            ai_mode = AIMode(screen, font, game, clock)
+            mode = ai_mode.run()
+        elif mode == 'editor':
+            level_editor = LevelEditor(GAME_WIDTH, GAME_HEIGHT)
+            level_editor.run(screen, clock)
+            game.levels = game.load_all_levels()  # Reload levels after editing
 
-            if curr_step % N != 0:
-                score_history.append(score)
-                if len(score_history) >= 10:
-                    avg_last_10_scores.append(np.mean(score_history[-10:]))
-                else:
-                    avg_last_10_scores.append(np.mean(score_history[:len(score_history)]))
-                learning_steps.append(curr_step)
+        mode = main_menu(screen, font)
 
-            print(f"Batch size {batch_size}, episode {curr_episode}: score {score}, time_steps {curr_step}, learning_steps {learn_iters}")
+    pygame.quit()
 
-        plot_learning_curve(learning_steps, score_history, avg_last_10_scores, label, figure_file)
-    except KeyboardInterrupt:
-        env.close()
-        if SAVE:
-            agent.save_models()
-        exit(0)
+def main_menu(screen, font):
+    buttons = [
+        pygame.Rect(450, 150, 300, 50),
+        pygame.Rect(450, 250, 300, 50),
+        pygame.Rect(450, 350, 300, 50)
+    ]
+
+    while True:
+        screen.fill((0, 0, 0))
+        draw_text(screen, font, 'Main Menu', (255, 255, 255), (SCREEN_WIDTH // 2, 100))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return None
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if buttons[0].collidepoint(event.pos):
+                    return 'player'
+                elif buttons[1].collidepoint(event.pos):
+                    return 'ai'
+                elif buttons[2].collidepoint(event.pos):
+                    return 'editor'
+
+        pygame.draw.rect(screen, (100, 100, 100), buttons[0])
+        pygame.draw.rect(screen, (100, 100, 100), buttons[1])
+        pygame.draw.rect(screen, (100, 100, 100), buttons[2])
+        draw_text(screen, font, 'Player Mode', (255, 255, 255), buttons[0].center)
+        draw_text(screen, font, 'AI Mode', (255, 255, 255), buttons[1].center)
+        draw_text(screen, font, 'Level Editor', (255, 255, 255), buttons[2].center)
+
+        pygame.display.flip()
+
+def draw_text(screen, font, text, color, position):
+    text_surface = font.render(text, True, color)
+    text_rect = text_surface.get_rect(center=position)
+    screen.blit(text_surface, text_rect)
+
+if __name__ == "__main__":
+    main()  
