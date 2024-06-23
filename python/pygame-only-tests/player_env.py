@@ -5,7 +5,7 @@ class PlayerEnv:
     def __init__(self):
         self.game = Game()
         self.current_step = 0
-        self.max_steps = 2500
+        self.max_steps = 1000
 
     def reset(self):
         self.current_step = 0

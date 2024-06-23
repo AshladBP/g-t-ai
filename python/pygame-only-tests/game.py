@@ -9,7 +9,6 @@ SCREEN_HEIGHT = 600
 MIN_WALLS = 1
 MAX_WALLS = 3
 WITH_BORDERS = True
-MAX_STEPS = 600 # 10 seconds
 
 class Game:
     def __init__(self):
@@ -74,7 +73,6 @@ class Game:
         return levels
 
     def reset(self):
-        self.nbsteps = 0
         if self.current_level:
             self.player = Player(*self.current_level['spawn'])
             self.walls = [Wall(*wall) for wall in self.current_level['walls']]
@@ -123,11 +121,6 @@ class Game:
     def step(self, action):
         self.player.update(action)
         self._cast_rays()
-
-        self.nbsteps += 1
-
-        if self.nbsteps >= MAX_STEPS:
-            return self._get_state(), -100, True
 
         for wall in self.walls:
             if self.player.rect.colliderect(wall.rect):
