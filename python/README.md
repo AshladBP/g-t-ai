@@ -71,11 +71,3 @@ python main.py
 2. Choose a level for training.
 3. Monitor the training progress and use the provided controls to manage the process.
 4. Save your trained model for later use.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is open source and available under the [MIT License](LICENSE).
