@@ -1,3 +1,5 @@
+WARINING: the back to menu buttons don't always work and sometimes crash. The bug is known,sorry for the disagreement.
+
 ## Features
 
 - Custom game environment built with Pygame
