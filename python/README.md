@@ -11,7 +11,7 @@
 
 1. Clone the repository:
    ```
-   git clone https://github.com/AshladBP/g-t-ai.git
+   git clone https://github.com/Gabfuwak/g-t-AI.git
    cd g-t-ai
    cd python
    ```
