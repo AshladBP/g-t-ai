@@ -49,7 +49,6 @@ def main():
             game.levels = game.load_all_levels()  # Reload levels after editing
 
         mode = main_menu(screen, font)
-
     pygame.quit()
 
 def main_menu(screen, font):
@@ -186,7 +185,7 @@ def ai_mode(screen, font, env, clock, level):
     game_surface = pygame.Surface((GAME_WIDTH, GAME_HEIGHT))
     env.set_level(level)
     agent = Agent(nb_actions=4, batch_size=1024, alpha=0.0003, nb_epochs=4, input_dims=(10,))
-
+    agent.models_dir = "models_data"
     stats = {
         "current_reward": 0,
         "current_loss_actor": 0,
@@ -208,6 +207,10 @@ def ai_mode(screen, font, env, clock, level):
     state, _, _ = env.reset()
 
     back_button = pygame.Rect(10, SCREEN_HEIGHT - 60, 180, 40)
+    save_button = pygame.Rect(10, SCREEN_HEIGHT - 110, 180, 40)
+    load_button = pygame.Rect(10, SCREEN_HEIGHT - 160, 180, 40)
+    pause_button = pygame.Rect(10, SCREEN_HEIGHT - 210, 180, 40)
+    render_button = pygame.Rect(10, SCREEN_HEIGHT - 260, 180, 40)
 
     while True:
         for event in pygame.event.get():
@@ -226,6 +229,10 @@ def ai_mode(screen, font, env, clock, level):
                         render_game = not render_game
                     elif back_button.collidepoint(event.pos):
                         return
+                    elif save_button.collidepoint(event.pos):
+                        save_model(screen, font, agent)
+                    elif load_button.collidepoint(event.pos):
+                        load_model(screen, font, agent)
 
         if not paused:
             action, prob, val = agent.choose_action(state)
@@ -265,8 +272,106 @@ def ai_mode(screen, font, env, clock, level):
         pygame.draw.rect(screen, (100, 100, 100), back_button)
         draw_text(screen, font, "Back to Menu", (255, 255, 255), back_button.center)
 
+        pygame.draw.rect(screen, (100, 100, 100), save_button)
+        draw_text(screen, font, "Save Model", (255, 255, 255), save_button.center)
+
+        pygame.draw.rect(screen, (100, 100, 100), load_button)
+        draw_text(screen, font, "Load Model", (255, 255, 255), load_button.center)
+
         pygame.display.flip()
         clock.tick(60)
+
+def save_model(screen, font, agent):
+    filename = text_input(screen, font, "Enter model name to save:")
+    if filename:
+        agent.save_models(filename)
+        print(f"Model saved as {filename}")
+
+def load_model(screen, font, agent):
+    available_models = agent.get_available_models()
+    if not available_models:
+        print("No saved models found.")
+        return
+
+    selected_model = selection_menu(screen, font, "Select a model to load:", available_models)
+    if selected_model:
+        agent.load_models(selected_model)
+        print(f"Model {selected_model} loaded")
+
+
+def text_input(screen, font, prompt):
+    input_text = ""
+    input_active = True
+    while input_active:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return None
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    input_active = False
+                elif event.key == pygame.K_BACKSPACE:
+                    input_text = input_text[:-1]
+                else:
+                    input_text += event.unicode
+
+        screen.fill((0, 0, 0))
+        draw_text(screen, font, prompt, (255, 255, 255), (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50))
+        pygame.draw.rect(screen, (100, 100, 100), (SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2, 200, 40))
+        draw_text(screen, font, input_text, (255, 255, 255), (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20))
+        pygame.display.flip()
+
+    return input_text
+
+def selection_menu(screen, font, prompt, options):
+    buttons = []
+    button_height = 50
+    button_width = 300
+    start_y = 100
+    max_buttons = 8
+    scroll_offset = 0
+
+    back_button = pygame.Rect(10, SCREEN_HEIGHT - 60, 180, 40)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return None
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Left mouse button
+                    mouse_pos = pygame.mouse.get_pos()
+                    for i, button in enumerate(buttons):
+                        if button.collidepoint(mouse_pos):
+                            return options[i + scroll_offset]
+                    if back_button.collidepoint(mouse_pos):
+                        return None
+                elif event.button == 4:  # Scroll up
+                    scroll_offset = max(0, scroll_offset - 1)
+                elif event.button == 5:  # Scroll down
+                    scroll_offset = min(len(options) - max_buttons, scroll_offset + 1)
+
+        screen.fill((0, 0, 0))
+        draw_text(screen, font, prompt, (255, 255, 255), (SCREEN_WIDTH // 2, 50))
+
+        buttons = []
+        for i, option in enumerate(options[scroll_offset:scroll_offset + max_buttons]):
+            button = pygame.Rect(SCREEN_WIDTH // 2 - button_width // 2, start_y + i * (button_height + 10), button_width, button_height)
+            buttons.append(button)
+            mouse_pos = pygame.mouse.get_pos()
+            color = (150, 150, 150) if button.collidepoint(mouse_pos) else (100, 100, 100)
+            pygame.draw.rect(screen, color, button)
+            draw_text(screen, font, option, (255, 255, 255), button.center)
+
+        # Draw scroll indicators
+        if scroll_offset > 0:
+            draw_text(screen, font, "↑", (255, 255, 255), (SCREEN_WIDTH // 2, start_y - 20))
+        if scroll_offset + max_buttons < len(options):
+            draw_text(screen, font, "↓", (255, 255, 255), (SCREEN_WIDTH // 2, start_y + max_buttons * (button_height + 10) + 20))
+
+        # Draw back button
+        pygame.draw.rect(screen, (100, 100, 100), back_button)
+        draw_text(screen, font, "Back", (255, 255, 255), back_button.center)
+
+        pygame.display.flip()
 
 def draw_stats(screen, font, stats):
     y = 10

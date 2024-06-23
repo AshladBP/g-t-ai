@@ -140,10 +140,23 @@ class Agent:
     def remember(self, state, action, probs, vals, reward, done):
         self.memory.store_memory(state, action, probs, vals, reward, done)
 
-    def save_models(self):
-        print("saving models...")
-        self.actor.save_checkpoint()
-        self.critic.save_checkpoint()
+    def save_models(self, filename):
+        print(f"Saving models to {filename}...")
+        actor_path = os.path.join(self.models_dir, f"{filename}_actor.pth")
+        critic_path = os.path.join(self.models_dir, f"{filename}_critic.pth")
+        T.save(self.actor.state_dict(), actor_path)
+        T.save(self.critic.state_dict(), critic_path)
+
+    def load_models(self, filename):
+        print(f"Loading models from {filename}...")
+        actor_path = os.path.join(self.models_dir, f"{filename}_actor.pth")
+        critic_path = os.path.join(self.models_dir, f"{filename}_critic.pth")
+        self.actor.load_state_dict(T.load(actor_path))
+        self.critic.load_state_dict(T.load(critic_path))
+
+    def get_available_models(self):
+        model_files = [f.replace('_actor.pth', '') for f in os.listdir(self.models_dir) if f.endswith('_actor.pth')]
+        return model_files
 
     def load_actor_model(self, file_path):
         print("loading actor model...")
