@@ -13,7 +13,7 @@ WARINING: the back to menu buttons don't always work and sometimes crash. The bu
 
 1. Clone the repository:
    ```
-   git clone https://github.com/Gabfuwak/g-t-AI.git
+   git clone https://github.com/AshladBP/g-t-AI.git
    cd g-t-ai
    cd python
    ```
